@@ -1,0 +1,83 @@
+/* Global, Utility, and Base Styles */
+html {
+  box-sizing: border-box;
+  font-size: 16px;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+body {
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  background: #181a20;
+  color: #eaeaea;
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility */
+.shadow-lg {
+  box-shadow: none !important;
+}
+
+/* Responsive Tweaks */
+@media (max-width: 576px) {
+  .container,
+  .container-fluid {
+    padding: 1rem 0.5rem !important;
+    border-radius: 0 !important;
+  }
+  .navbar {
+    border-radius: 0 !important;
+    min-height: 56px;
+  }
+  .navbar-brand {
+    font-size: 1.1rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+  .navbar-toggler {
+    margin-right: 0.5rem;
+  }
+  #profileNavLink {
+    width: 100%;
+    margin: 0.5rem 0 !important;
+    font-size: 1.1rem !important;
+    padding: 0.75rem 1rem !important;
+    text-align: center;
+    border-radius: 18px !important;
+    display: block;
+  }
+  .btn-info,
+  .btn-outline-info {
+    background: #6d4c5b !important;
+    color: #f4f4f4 !important;
+    border: none !important;
+    font-weight: 600;
+    border-radius: 8px !important;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: none;
+  }
+  .btn-info:hover,
+  .btn-outline-info:hover {
+    background: #a06c85 !important;
+    color: #fff !important;
+  }
+  .form-control,
+  .form-select {
+    font-size: 1rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+  .row.g-2 > [class^="col-"] {
+    margin-bottom: 0.75rem;
+  }
+  h1,
+  .fw-bold {
+    font-size: 1.3rem !important;
+  }
+  .lead {
+    font-size: 1rem !important;
+  }
+}

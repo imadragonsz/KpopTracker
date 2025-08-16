@@ -1,3 +1,23 @@
+// --- Caching Utilities ---
+function getCachedData(key) {
+  try {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+    return JSON.parse(cached);
+  } catch (e) {
+    return null;
+  }
+}
+
+function setCachedData(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function isDataDifferent(a, b) {
+  return JSON.stringify(a) !== JSON.stringify(b);
+}
 import { fetchGroups, addGroup, updateGroup } from "../api/groupApi.js";
 import { fetchAlbums } from "../api/albumApi.js";
 import {
@@ -98,8 +118,28 @@ const groupSortSelect = document.getElementById("groupSortSelect");
 let currentGroupPage = 1;
 const GROUPS_PER_PAGE = 10;
 
+// Guard to prevent excessive reloads
+let isRenderingGroups = false;
+
 async function loadAndRenderGroups() {
-  let groups = await fetchGroups();
+  if (isRenderingGroups) return;
+  isRenderingGroups = true;
+  // Try cache first
+  let groups = getCachedData("groups");
+  let fetchedGroups = null;
+  if (!groups) {
+    groups = await fetchGroups();
+    setCachedData("groups", groups);
+    // groups is now up to date, continue to render below
+  } else {
+    // Fetch in background and update cache if changed
+    fetchGroups().then((fresh) => {
+      if (isDataDifferent(fresh, groups)) {
+        setCachedData("groups", fresh);
+        // Do not trigger another reload here to avoid infinite loop
+      }
+    });
+  }
   // Sort groups based on dropdown
   if (groupSortSelect) {
     const sortValue = groupSortSelect.value;
@@ -109,6 +149,18 @@ async function loadAndRenderGroups() {
     } else if (sortValue === "za") {
       groups.sort((a, b) => b.name.localeCompare(a.name));
     }
+  }
+  // Update group count display and move it to the right of groupSortSelect
+  const groupCountSpan = document.getElementById("groupCount");
+  const groupSortSelectEl = document.getElementById("groupSortSelect");
+  if (groupCountSpan && groupSortSelectEl && groupSortSelectEl.parentNode) {
+    groupCountSpan.textContent =
+      groups.length + (groups.length === 1 ? " group" : " groups");
+    // Move the groupCount span to the right of the groupSortSelect
+    groupSortSelectEl.parentNode.appendChild(groupCountSpan);
+    groupCountSpan.style.marginLeft = "0.75rem";
+    groupCountSpan.style.display = "inline-block";
+    groupCountSpan.style.verticalAlign = "middle";
   }
   groupList.innerHTML = "";
   // Pagination logic
@@ -179,14 +231,24 @@ async function loadAndRenderGroups() {
     // Group info event
     li.addEventListener("click", async function (e) {
       if (e.target.classList.contains("edit-group-btn")) return;
-      const groups = await fetchGroups();
+      const groups = getCachedData("groups") || (await fetchGroups());
       const g = groups.find((gr) => gr.id == group.id);
       if (g) {
+        // Albums: cache
+        let albums = getCachedData("albums");
+        if (!albums) {
+          albums = await fetchAlbums();
+          setCachedData("albums", albums);
+        } else {
+          fetchAlbums().then((fresh) => {
+            if (isDataDifferent(fresh, albums)) {
+              setCachedData("albums", fresh);
+            }
+          });
+        }
         Promise.all([
           fetchMembersByGroup(g.id),
-          fetchAlbums().then((albums) =>
-            albums.filter((a) => a.group === g.name)
-          ),
+          Promise.resolve(albums.filter((a) => a.group === g.name)),
         ]).then(([members, albums]) => {
           showGroupInfoModal(g, members, albums, {
             onShow: () => groupInfoModal.show(),
@@ -278,6 +340,7 @@ async function loadAndRenderGroups() {
   if (!document.getElementById("groupPagination")) {
     groupList.parentNode.appendChild(paginationDiv);
   }
+  isRenderingGroups = false;
 }
 
 addMemberForm.addEventListener("submit", function (e) {
@@ -339,47 +402,56 @@ loadAndRenderGroups();
 const params = new URLSearchParams(window.location.search);
 const groupName = params.get("group");
 if (groupName) {
-  fetchGroups().then((groups) => {
-    const g = groups.find((gr) => gr.name === groupName);
-    if (g) {
-      Promise.all([
-        fetchMembersByGroup(g.id),
-        fetchAlbums().then((albums) =>
-          albums.filter((a) => a.group === g.name)
-        ),
-      ]).then(([members, albums]) => {
-        showGroupInfoModal(g, members, albums, {
-          onShow: () => groupInfoModal.show(),
-          onManageMembers: () => {
-            groupInfoModal.hide();
-            setTimeout(() => {
-              currentGroupId = g.id;
-              showMembersList();
-              manageMembersModal.show();
-            }, 300);
-          },
-          onAlbumClick: (albumId) => {
-            const album = albums.find((a) => a.id == albumId);
-            if (album) {
-              groupInfoModal.hide();
-              setTimeout(() => {
-                showAlbumInfoModal(album);
-                albumInfoModal.show();
-              }, 300);
-            }
-          },
-          onMemberClick: (memberId) => {
-            const member = members.find((m) => m.id == memberId);
-            if (member) {
-              groupInfoModal.hide();
-              setTimeout(() => {
-                showMemberInfoModal(member);
-                memberInfoModal.show();
-              }, 300);
-            }
-          },
-        });
+  const groups = getCachedData("groups") || (await fetchGroups());
+  const g = groups.find((gr) => gr.name === groupName);
+  if (g) {
+    // Albums: cache
+    let albums = getCachedData("albums");
+    if (!albums) {
+      albums = await fetchAlbums();
+      setCachedData("albums", albums);
+    } else {
+      fetchAlbums().then((fresh) => {
+        if (isDataDifferent(fresh, albums)) {
+          setCachedData("albums", fresh);
+        }
       });
     }
-  });
+    Promise.all([
+      fetchMembersByGroup(g.id),
+      Promise.resolve(albums.filter((a) => a.group === g.name)),
+    ]).then(([members, albums]) => {
+      showGroupInfoModal(g, members, albums, {
+        onShow: () => groupInfoModal.show(),
+        onManageMembers: () => {
+          groupInfoModal.hide();
+          setTimeout(() => {
+            currentGroupId = g.id;
+            showMembersList();
+            manageMembersModal.show();
+          }, 300);
+        },
+        onAlbumClick: (albumId) => {
+          const album = albums.find((a) => a.id == albumId);
+          if (album) {
+            groupInfoModal.hide();
+            setTimeout(() => {
+              showAlbumInfoModal(album);
+              albumInfoModal.show();
+            }, 300);
+          }
+        },
+        onMemberClick: (memberId) => {
+          const member = members.find((m) => m.id == memberId);
+          if (member) {
+            groupInfoModal.hide();
+            setTimeout(() => {
+              showMemberInfoModal(member);
+              memberInfoModal.show();
+            }, 300);
+          }
+        },
+      });
+    });
+  }
 }

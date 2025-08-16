@@ -27,29 +27,22 @@ function insertAuthButtons() {
     let profileNavLink = document.getElementById("profileNavLink");
     if (!profileNavLink) {
       profileNavLink = document.createElement("a");
-      profileNavLink.className = "btn btn-info ms-2 fw-bold";
+      profileNavLink.className = "btn btn-info ms-2 fw-bold navbar-profile-btn";
       profileNavLink.id = "profileNavLink";
       profileNavLink.href = "/pages/profile.html";
       profileNavLink.textContent = "My Profile";
-    }
-    // Only add if not on profile.html
-    if (!window.location.pathname.includes("profile.html")) {
-      const profileNavContainer = document.getElementById(
-        "profileNavContainer"
-      );
-      if (
-        profileNavContainer &&
-        !profileNavContainer.contains(profileNavLink)
-      ) {
-        profileNavContainer.appendChild(profileNavLink);
-      }
-      profileNavLink.style.display = "";
     } else {
-      // Remove if on profile.html
-      if (profileNavLink && profileNavLink.parentElement) {
-        profileNavLink.parentElement.removeChild(profileNavLink);
+      // Ensure the class is present if the element already exists
+      if (!profileNavLink.classList.contains("navbar-profile-btn")) {
+        profileNavLink.classList.add("navbar-profile-btn");
       }
     }
+    // Always add the profile button
+    const profileNavContainer = document.getElementById("profileNavContainer");
+    if (profileNavContainer && !profileNavContainer.contains(profileNavLink)) {
+      profileNavContainer.appendChild(profileNavLink);
+    }
+    profileNavLink.style.display = "";
     // Attach login button event listener immediately after insertion
     const loginBtn = document.getElementById("loginBtn");
     if (loginBtn) {
@@ -81,10 +74,8 @@ function ensureAuthButtonsInjected() {
 
 function showLoginModal() {
   try {
-    console.log("showLoginModal called");
     const modal = document.getElementById("authModal");
     if (modal) {
-      console.log("authModal found, attempting to show modal");
       const modalInstance = new bootstrap.Modal(modal);
       modalInstance.show();
     } else {
@@ -174,9 +165,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       logoutBtn.replaceWith(logoutBtn.cloneNode(true));
       logoutBtn = document.getElementById("logoutBtn");
       logoutBtn.addEventListener("click", async () => {
-        console.log("Logout clicked");
         await signOut();
-        await updateAuthUI();
+        window.location.reload();
       });
     }
   }
@@ -187,19 +177,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
       const email = document.getElementById("authEmail").value.trim();
       const password = document.getElementById("authPassword").value;
-      console.log("Login attempt:", {
-        email,
-        passwordLength: password ? password.length : 0,
-      });
       if (!email || !password) {
         document.getElementById("authError").textContent =
           "Email and password are required.";
         return;
       }
       try {
-        console.log("About to call signIn. signIn type:", typeof signIn);
         const signInPromise = signIn(email, password);
-        console.log("signInPromise (promise):", signInPromise);
         let timeout = false;
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => {
@@ -216,7 +200,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             "Login failed. Please try again.";
           return;
         }
-        console.log("Raw signIn result:", signInResult);
         const { data, error } = signInResult || {};
         if (timeout) {
           document.getElementById("authError").textContent =
@@ -224,7 +207,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           console.warn("signIn timed out");
           return;
         }
-        console.log("signIn response after await:", { data, error });
         if (error) {
           document.getElementById("authError").textContent = error.message;
           console.error("Login error:", error.message);
@@ -235,7 +217,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else if (data && data.session) {
           document.getElementById("authError").textContent = "";
           hideLoginModal();
-          console.log("Login successful");
         } else {
           document.getElementById("authError").textContent =
             "Login failed. Please check your credentials or confirm your email.";
@@ -294,20 +275,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     let profileNavLink = document.getElementById("profileNavLink");
     const profileNavContainer = document.getElementById("profileNavContainer");
     if (profileNavContainer) {
-      if (user && !window.location.pathname.includes("profile.html")) {
-        if (!profileNavLink) {
-          profileNavLink = document.createElement("a");
-          profileNavLink.className = "btn btn-info ms-2 fw-bold";
-          profileNavLink.id = "profileNavLink";
-          profileNavLink.href = "/pages/profile.html";
-          profileNavLink.textContent = "My Profile";
-        }
-        profileNavLink.style.display = "";
-        if (!profileNavLink.parentElement) {
-          profileNavContainer.appendChild(profileNavLink);
-        }
-      } else if (profileNavLink) {
-        profileNavLink.style.display = "none";
+      if (!profileNavLink) {
+        profileNavLink = document.createElement("a");
+        profileNavLink.className = "btn btn-info ms-2 fw-bold";
+        profileNavLink.id = "profileNavLink";
+        profileNavLink.href = "/pages/profile.html";
+        profileNavLink.textContent = "My Profile";
+      }
+      profileNavLink.style.display = "";
+      if (!profileNavLink.parentElement) {
+        profileNavContainer.appendChild(profileNavLink);
+      }
+      if (user) {
+        profileNavLink.classList.remove("disabled");
+        profileNavLink.removeAttribute("tabindex");
+        profileNavLink.removeAttribute("aria-disabled");
+        profileNavLink.title = "";
+      } else {
+        profileNavLink.classList.add("disabled");
+        profileNavLink.setAttribute("tabindex", "-1");
+        profileNavLink.setAttribute("aria-disabled", "true");
+        profileNavLink.title = "Log in to view your profile";
       }
     }
     // (Debug logs removed)

@@ -8,26 +8,28 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="../styles/global.css" />
+    <link rel="stylesheet" href="../styles/navbar.css" />
+    <link rel="stylesheet" href="../styles/album-cards.css" />
+    <link rel="stylesheet" href="../styles/modals.css" />
+    <link rel="stylesheet" href="../styles/forms.css" />
   </head>
-  <body>
-    <!-- Navbar will be loaded dynamically -->
+  <body class="profile-bg">
     <div id="navbar-include"></div>
 
     <script>
-      fetch("../components/navbar.html")
+      fetch("./components/navbar.html")
         .then((res) => res.text())
         .then((html) => {
           document.getElementById("navbar-include").innerHTML = html;
           // Dynamically load authUI.js as a module after navbar is present
           const script = document.createElement("script");
           script.type = "module";
-          script.src = "./js/authUI.js";
+          script.src = "../js/authUI.js";
           document.body.appendChild(script);
         });
     </script>
 
-    <!-- HERO SECTION -->
     <section class="py-5 text-center">
       <div class="container">
         <img
@@ -43,25 +45,30 @@
           "
           class="mb-3 mt-2 shadow-none"
         />
-        <h1 class="fw-bold mb-2" style="color: #43c6ac">
+        <h1 class="fw-bold mb-2 hero-heading-text text-center">
           Your K-Pop Album Library
         </h1>
-        <p
-          class="lead mb-4"
-          style="color: #bfc9db; max-width: 600px; margin: auto"
-        >
+        <p class="lead mb-4 hero-lead-text text-center">
           Add, browse, and celebrate every album in your K-Pop journey. This is
           your digital shelf—make it shine!
         </p>
         <a
           href="/pages/albumCollection.html"
           class="btn btn-info btn-lg px-5 fw-bold"
+          id="goToAlbumCollectionBtn"
           >Go to Album Collection</a
         >
+        <script>
+          // Intercept click to set a flag for login modal
+          document
+            .getElementById("goToAlbumCollectionBtn")
+            .addEventListener("click", function (e) {
+              sessionStorage.setItem("showLoginOnAlbumPage", "1");
+            });
+        </script>
       </div>
     </section>
 
-    <!-- FEATURE HIGHLIGHTS -->
     <section class="container py-5">
       <div class="row g-4 justify-content-center">
         <div class="col-md-4">
@@ -106,7 +113,6 @@
       </div>
     </section>
 
-    <!-- COMMUNITY & VALUE SECTION -->
     <section class="container py-4">
       <div class="row align-items-center">
         <div class="col-md-7 mb-3 mb-md-0">
@@ -135,22 +141,27 @@
       </div>
     </section>
 
-    <!-- FOOTER -->
     <footer
       class="text-center py-4 mt-5"
-      style="color: #67e8f9; background: #232946; border-radius: 0 0 18px 18px"
+      style="
+        color: #bfc9db;
+        background: #232226;
+        border-radius: 0 0 18px 18px;
+        box-shadow: 0 -2px 16px 0 #a06c8533;
+      "
     >
       <div class="container">
         <small>
           K-Pop Album Tracker &copy; 2025. Made with
           <span style="color: #ff6f61">♥</span> for the K-Pop community. |
-          <a href="#" style="color: #43c6ac">Privacy Policy</a> |
-          <a href="#" style="color: #43c6ac">Terms</a>
+          <a href="#" style="color: #a06c85">Privacy Policy</a> |
+          <a href="#" style="color: #a06c85">Terms</a>
         </small>
       </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="../js/authUI.js"></script>
   </body>
 </html>

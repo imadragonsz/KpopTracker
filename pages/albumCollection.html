@@ -3,34 +3,76 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>K-Pop Album Collection</title>
-    <!-- Bootstrap 5 CDN -->
+    
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../style.css" />
+  <link rel="stylesheet" href="../styles/global.css" />
+  <link rel="stylesheet" href="../styles/navbar.css" />
+  <link rel="stylesheet" href="../styles/album-cards.css" />
+  <link rel="stylesheet" href="../styles/modals.css" />
+  <link rel="stylesheet" href="../styles/forms.css" />
   </head>
-  <body>
-  <!-- Navbar will be loaded dynamically -->
+  <body class="profile-bg">
+  
   <div id="navbar-include"></div>
   <script>
-    fetch('../components/navbar.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById('navbar-include').innerHTML = html;
-      });
+  fetch('./components/navbar.html')
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('navbar-include').innerHTML = html;
+      // Re-initialize Bootstrap collapse for dynamically loaded navbar
+      if (window.bootstrap && window.bootstrap.Collapse) {
+        document.querySelectorAll('.navbar-collapse').forEach(el => {
+          new window.bootstrap.Collapse(el, {toggle: false});
+        });
+      }
+      // Dynamically load Supabase CDN, then main JS files (Bootstrap JS is now in HTML)
+      const supabaseScript = document.createElement('script');
+      supabaseScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js';
+      supabaseScript.onload = () => {
+        const scripts = [
+          '../js/authUI.js',
+          '../js/api/supabaseClient.js',
+          '../js/api/groupApi.js',
+          '../js/api/albumApi.js',
+          '../js/pages/albumCollectionPage.js'
+        ];
+        scripts.forEach(src => {
+          const s = document.createElement('script');
+          s.type = 'module';
+          s.src = src;
+          document.body.appendChild(s);
+        });
+        // After all scripts, check for login modal flag
+        setTimeout(() => {
+          if (sessionStorage.getItem('showLoginOnAlbumPage')) {
+            sessionStorage.removeItem('showLoginOnAlbumPage');
+            setTimeout(() => {
+              const loginBtn = document.getElementById('loginBtn');
+              const logoutBtn = document.getElementById('logoutBtn');
+              if (loginBtn && (!logoutBtn || logoutBtn.classList.contains('d-none'))) {
+                loginBtn.click();
+              }
+            }, 500);
+          }
+        }, 1000);
+      };
+      document.body.appendChild(supabaseScript);
+    });
   </script>
-    <!-- HERO SECTION -->
+    
   <section class="py-5 text-center hero-section">
       <div class="container">
         <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="Vinyl Icon" style="width: 90px; height: 90px; background: #232a36; border-radius: 50%; padding: 10px; border: 2px solid #43c6ac;" class="mb-3 mt-2 shadow-none" />
-        <h1 class="fw-bold mb-2" style="color: #43c6ac;">Album Collection</h1>
-        <p class="lead mb-3" style="color: #bfc9db; max-width: 600px; margin: auto;">
+        <h1 class="fw-bold mb-2 hero-heading-text text-center">Album Collection</h1>
+        <p class="lead mb-3 hero-lead-text text-center">
           Add, edit, and browse your K-Pop albums. See your collection grow with every comeback!
         </p>
       </div>
     </section>
-  <div class="container my-5 p-4 rounded main-container" style="max-width: 700px; background: #232946; width: 100%">
+  <div class="container my-5 p-4 rounded main-container" style="max-width: 900px; background: #232946; width: 100%">
       <div class="row g-3 mb-4">
         <div class="col-12">
           <div class="card border-info bg-dark">
@@ -48,6 +90,18 @@
                 <div class="col-12">
                   <input type="url" id="albumImage" class="form-control" placeholder="Album Cover Image URL (optional)" />
                 </div>
+                <div class="col-12">
+                  <label for="albumVersionInput" class="form-label">Album Versions</label>
+                  <div class="input-group mb-2 align-items-center">
+                    <input type="text" id="albumVersionInput" class="form-control" placeholder="e.g. Photobook, Limited, Jewel Case" />
+                    <div class="input-group-text bg-dark border-0">
+                      <input type="checkbox" id="albumVersionOnTheWay" class="form-check-input mt-0" title="Check if this version is on the way (pre-ordered or shipping)" />
+                      <label for="albumVersionOnTheWay" class="form-check-label ms-1 mb-0 text-warning" style="font-size:0.9em;">On the Way</label>
+                    </div>
+                    <button type="button" id="addAlbumVersionBtn" class="btn btn-outline-info">Add</button>
+                  </div>
+                  <div id="albumVersionsList" class="mb-2"></div>
+                </div>
                 <div class="col-12 d-grid mt-2">
                   <button type="submit" class="btn btn-info fw-bold">Add Album</button>
                 </div>
@@ -56,7 +110,7 @@
           </div>
         </div>
       </div>
-      <!-- Advanced Filter Bar -->
+      
       <div class="row g-3 mb-3 align-items-end">
         <div class="col-12 col-md-4">
           <input type="text" id="searchInput" class="form-control" placeholder="Search by album name..." />
@@ -87,107 +141,82 @@
                   <span class="album-versions-list"></span>
                 </div>
               </template>
+
+              
+              <div class="modal fade" id="editAlbumModal" tabindex="-1" aria-labelledby="editAlbumModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content bg-dark text-light">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="editAlbumModalLabel">Edit Album</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <form id="editAlbumForm">
+                        <div class="mb-3">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editOnTheWay" />
+                            <label class="form-check-label" for="editOnTheWay">On the Way</label>
+                          </div>
+                        </div>
+                        <div class="mb-3">
+                          <label for="editGroup" class="form-label">Group Name</label>
+                          <input type="text" class="form-control" id="editGroup" required />
+                        </div>
+                        <div class="mb-3">
+                          <label for="editAlbum" class="form-label">Album Name</label>
+                          <input type="text" class="form-control" id="editAlbum" required />
+                        </div>
+                        <div class="mb-3">
+                          <label for="editYear" class="form-label">Year</label>
+                          <input type="number" class="form-control" id="editYear" required />
+                        </div>
+                        <div class="mb-3">
+                          <label for="editImage" class="form-label">Album Image URL</label>
+                          <input type="url" class="form-control" id="editImage" placeholder="Album Image URL (optional)" />
+                        </div>
+
+                        <div class="mb-3">
+                          <label class="form-label">Album Versions</label>
+                          <button type="button" class="btn btn-outline-info btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#editVersionsModal">Edit Versions</button>
+                        </div>
+                        <button type="submit" class="btn btn-info fw-bold">Save Changes</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+<div class="modal fade" id="editVersionsModal" tabindex="-1" aria-labelledby="editVersionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-light">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editVersionsModalLabel">Edit Album Versions</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="editVersionInput" class="form-label">Version Name</label>
+          <div class="input-group mb-2 align-items-center">
+            <input type="text" id="editVersionInput" class="form-control" placeholder="e.g. Photobook, Limited, Jewel Case" />
+            <div class="input-group-text bg-dark border-0">
+              <input type="checkbox" id="editVersionOnTheWay" class="form-check-input mt-0" title="Add the 'On the Way' tag to this version" />
+              <label for="editVersionOnTheWay" class="form-check-label ms-1 mb-0" style="font-size:0.95em; color:#f8f9fa; font-weight:500;">On the Way</label>
             </div>
+            <button type="button" id="addEditVersionBtn" class="btn btn-outline-info">Add</button>
           </div>
         </div>
+        <div id="editVersionsList" class="mb-2"></div>
       </div>
     </div>
-    <footer
-      class="text-center py-4 mt-5"
-      style="
-        color: #67e8f9;
-        background: rgba(34, 41, 70, 0.98);
-        border-radius: 0 0 18px 18px;
-      "
-    >
-      <div class="container">
-        <small
-          >K-Pop Album Tracker &copy; 2025. Made with
-          <span style="color: #ff6f61">♥</span> for the K-Pop community. |
-          <a href="#" style="color: #43c6ac">Privacy Policy</a> |
-          <a href="#" style="color: #43c6ac">Terms</a></small
-        >
-      </div>
-    </footer>
-    <!-- Edit Album Modal -->
-    <div
-      class="modal fade"
-      id="editAlbumModal"
-      tabindex="-1"
-      aria-labelledby="editAlbumModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content bg-dark text-light">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editAlbumModalLabel">Edit Album</h5>
-            <button
-              type="button"
-              class="btn-close btn-close-white"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <form id="editAlbumForm">
-              <div class="mb-3">
-                <label for="editGroup" class="form-label">Group Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="editGroup"
-                  required
-                />
+  </div>
+</div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="mb-3">
-                <label for="editAlbum" class="form-label">Album Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="editAlbum"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label for="editYear" class="form-label">Year</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  id="editYear"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label for="editImage" class="form-label"
-                  >Album Image URL</label
-                >
-                <input
-                  type="url"
-                  class="form-control"
-                  id="editImage"
-                  placeholder="Album Image URL (optional)"
-                />
-              </div>
-              <div class="mb-3">
-                <label for="editVersions" class="form-label"
-                  >Album Versions (comma separated)</label
-                >
-                <input
-                  type="text"
-                  class="form-control"
-                  id="editVersions"
-                  placeholder="e.g. Photobook, Limited, Jewel Case"
-                />
-              </div>
-              <button type="submit" class="btn btn-info fw-bold">
-                Save Changes
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Album Info Modal -->
+    
     <div
       class="modal fade"
       id="albumInfoModal"
@@ -207,17 +236,27 @@
             ></button>
           </div>
           <div class="modal-body" id="albumInfoBody">
-            <!-- Album info will be injected by JS -->
+            
           </div>
         </div>
       </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="../js/authUI.js"></script>
-    <script type="module" src="../js/api/supabaseClient.js" defer></script>
-    <script type="module" src="../js/api/groupApi.js" defer></script>
-    <script type="module" src="../js/api/albumApi.js" defer></script>
-    <script type="module" src="../js/pages/indexPage.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="../js/authUI.js"></script>
+
+    <footer class="text-center py-4 mt-5" style="
+        color: #bfc9db;
+        background: #232226;
+        border-radius: 0 0 18px 18px;
+        box-shadow: 0 -2px 16px 0 #a06c8533;
+      ">
+      <div class="container">
+        <small>K-Pop Album Tracker © 2025. Made with
+          <span style="color: #ff6f61">♥</span> for the K-Pop community. |
+          <a href="#" style="color: #a06c85">Privacy Policy</a> |
+          <a href="#" style="color: #a06c85">Terms</a></small>
+      </div>
+    </footer>
   </body>
 </html>

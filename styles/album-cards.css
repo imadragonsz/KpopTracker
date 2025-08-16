@@ -1,0 +1,213 @@
+@media (max-width: 700px) {
+  .album-card-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .album-card-img-wrap {
+    margin: 0 auto 0.5rem auto;
+  }
+  .album-card-main {
+    width: 100%;
+    min-width: 0;
+  }
+  .album-card-title {
+    font-size: 1rem;
+    flex-wrap: wrap;
+    gap: 0.3em;
+  }
+  .version-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    font-size: 0.95em;
+    min-height: 40px;
+    gap: 0.2em;
+  }
+  .album-card-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .version-pagination-controls {
+    justify-content: flex-start;
+    gap: 0.5rem;
+    overflow-x: auto;
+    width: 100%;
+  }
+  .album-card-actions {
+    margin-left: 0;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  .album-card-actions .btn {
+    width: auto;
+    min-width: 60px;
+    font-size: 0.95em;
+    padding: 0.3em 0.7em !important;
+  }
+}
+/* Ensure version pagination controls stay in place */
+/* Album Card Styles */
+.album-card-img-placeholder {
+  background: #191a22;
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+.album-card-img-initials {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  color: #43c6ac;
+  font-size: 1.2em;
+  font-weight: 700;
+  opacity: 0.7;
+  pointer-events: none;
+}
+.album-card-version-placeholder {
+  min-height: 2.1em;
+  display: inline-block;
+}
+/* Increased max width for album cards */
+/* Make album cards utilize full width of container */
+.redesigned-album-card {
+  max-width: 900px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4em;
+  width: 100%;
+  margin-top: 0.1em;
+}
+.redesigned-album-card.p-3 {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+.album-card-flex {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 80px;
+  width: 100%;
+}
+.album-card-img-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 90px;
+  height: 90px;
+  background: #191a22;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px 0 #23294622;
+}
+.album-card-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #232946;
+}
+.album-card-main {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.album-card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f4f4f4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5em;
+}
+.album-card-group {
+  color: #43c6ac;
+  font-weight: 700;
+}
+.album-card-sep {
+  color: #bfc9db;
+  font-weight: 400;
+}
+.album-card-name {
+  color: #f4f4f4;
+  font-weight: 600;
+}
+.album-card-year {
+  color: #bfc9db;
+  font-size: 0.98em;
+  font-weight: 400;
+}
+.version-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em 0.4em;
+  align-items: flex-start;
+  margin-bottom: 0.2em;
+  width: 100%;
+  min-height: 52px;
+}
+/* Compact badges */
+.badge {
+  font-size: 0.92em !important;
+  padding: 0.25em 0.7em !important;
+  border-radius: 8px !important;
+  margin-bottom: 0.1em !important;
+}
+
+/* New row for pagination and actions */
+.album-card-controls-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  margin-top: 0.1em;
+  min-width: 0;
+  justify-content: flex-start;
+  /* Ensure version controls fill space and actions stay right */
+  .version-pagination-controls {
+    flex: 1 1 auto;
+  }
+  .album-card-actions {
+    margin-left: auto;
+  }
+  flex-wrap: nowrap;
+}
+.album-card-actions .btn {
+  width: 70px;
+  font-size: 0.95em;
+  padding: 0.3em 0.7em !important;
+  font-weight: 600;
+  border-radius: 8px;
+}
+@media (max-width: 700px) {
+  .album-card-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .album-card-actions {
+    flex-direction: row !important;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 0.1em;
+    min-width: 70px;
+    margin-left: auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    white-space: nowrap;
+  }
+}

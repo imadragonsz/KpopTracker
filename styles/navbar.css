@@ -1,0 +1,173 @@
+/* Improve visibility of the default Bootstrap toggler icon */
+.navbar-toggler-icon {
+  filter: brightness(0) saturate(100%) invert(70%) sepia(80%) saturate(400%)
+    hue-rotate(120deg);
+}
+/* Navbar Styles */
+.navbar,
+.navbar.fixed-top {
+  background: #232946 !important;
+  border-bottom: 1.5px solid #313a5a;
+  border-radius: 0;
+  box-shadow: none;
+  position: sticky;
+  top: 0;
+  z-index: 1100;
+  padding: 0.5rem 0;
+}
+.navbar.fixed-top {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  z-index: 1200;
+  margin-bottom: 0 !important;
+}
+.navbar-brand {
+  color: #67e8f9 !important;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-size: 1.3rem;
+}
+.navbar-nav .nav-link {
+  color: #eaeaea !important;
+  font-weight: 500;
+  margin-right: 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+  padding: 0.5rem 1rem;
+}
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link:hover {
+  background: #232a36 !important;
+  color: #67e8f9 !important;
+}
+.navbar-profile-btn {
+  display: flex !important;
+  align-items: center !important;
+  height: 40px !important;
+  margin-top: auto !important;
+  margin-bottom: auto !important;
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+  font-size: 1rem !important;
+  line-height: 1.2 !important;
+}
+#profileNavLink {
+  background: #43c6ac;
+  color: #181a20 !important;
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0.5rem 1.5rem;
+  transition: background 0.2s, color 0.2s;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+  font-size: 1.05rem;
+  display: inline-block;
+}
+#profileNavLink:hover,
+#profileNavLink:focus {
+  background: #67e8f9;
+  color: #181a20 !important;
+  text-decoration: none;
+}
+.navbar-custom {
+  background: rgba(35, 41, 70, 0.92) !important;
+  backdrop-filter: blur(8px);
+  border-bottom: 2px solid #43c6ac;
+  min-height: 64px;
+  box-shadow: 0 2px 12px 0 rgba(34, 41, 70, 0.12);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.navbar-custom .navbar-brand {
+  color: #43c6ac !important;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 4px rgba(67, 198, 172, 0.08);
+  transition: color 0.2s;
+}
+.navbar-custom .navbar-brand:hover {
+  color: #67e8f9 !important;
+}
+.navbar-custom .navbar-nav .nav-link {
+  color: #eaeaea !important;
+  font-size: 1.08rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  margin-right: 0.25rem;
+  margin-left: 0.25rem;
+  transition: background 0.18s, color 0.18s;
+  letter-spacing: 0.2px;
+}
+.navbar-custom .navbar-nav .nav-link.active,
+.navbar-custom .navbar-nav .nav-link:hover {
+  background: #232a36 !important;
+  color: #43c6ac !important;
+}
+.navbar-custom #profileNavLink {
+  margin-left: 1rem;
+  margin-right: 0.5rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #43c6ac 60%, #67e8f9 100%);
+  color: #181a20 !important;
+  box-shadow: 0 2px 8px 0 rgba(67, 198, 172, 0.08);
+  border: none;
+  padding: 0.5rem 1.7rem;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+.navbar-custom #profileNavLink:hover,
+.navbar-custom #profileNavLink:focus {
+  background: linear-gradient(90deg, #67e8f9 60%, #43c6ac 100%);
+  color: #181a20 !important;
+  box-shadow: 0 4px 16px 0 rgba(67, 198, 172, 0.16);
+}
+.navbar-custom .navbar-toggler {
+  border: 2px solid #43c6ac !important;
+  background: #181a20 !important;
+  color: #67e8f9 !important;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px 0 #43c6ac33;
+}
+.navbar-custom .navbar-toggler:focus {
+  box-shadow: 0 0 0 3px #67e8f9, 0 2px 8px 0 #43c6ac33;
+  outline: none;
+}
+@media (max-width: 991.98px) {
+  .navbar-nav {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    width: 100%;
+    gap: 0.5rem !important;
+  }
+  .navbar-nav .nav-link {
+    padding: 0.75rem 1.2rem !important;
+    width: 100%;
+    border-radius: 0.5rem;
+    text-align: left;
+  }
+  .navbar-toggler {
+    padding: 0.6rem 1.2rem !important;
+    font-size: 1.3rem !important;
+    border-width: 2px !important;
+    border-radius: 8px;
+    background: #181a20 !important;
+    color: #67e8f9 !important;
+  }
+  .navbar-collapse {
+    background: #232946 !important;
+    border-radius: 0 0 1rem 1rem;
+    box-shadow: 0 4px 16px 0 rgba(34, 41, 70, 0.18);
+    margin-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}

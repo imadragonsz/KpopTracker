@@ -1,0 +1,94 @@
+/* Make form labels more visible */
+.form-label {
+  color: #e0e0e0 !important;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px #181a20cc;
+}
+/* Make placeholder text highly visible in dark theme */
+.form-control::placeholder,
+.form-select::placeholder {
+  color: #e0e0e0 !important;
+  opacity: 1 !important;
+}
+
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder {
+  color: #e0e0e0 !important;
+}
+input::-ms-input-placeholder,
+textarea::-ms-input-placeholder {
+  color: #e0e0e0 !important;
+}
+/* Form and Button Styles */
+/* Improve input text visibility */
+.form-control,
+.form-select {
+  background: #29282d !important;
+  color: #ffffff !important;
+  border: 1.5px solid #43c6ac !important;
+  border-radius: 10px;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: none;
+  caret-color: #43c6ac !important;
+}
+.form-control:focus,
+.form-select:focus {
+  border: 1.5px solid #43c6ac;
+  background: #232946;
+  color: #eaeaea;
+}
+.btn,
+.btn-info,
+.btn-outline-info {
+  padding: 10px !important;
+  padding: clamp(0.3rem, 1vw, 0.7rem) clamp(0.6rem, 2vw, 1.2rem) !important;
+  background: #43c6ac !important;
+  color: #181a20 !important;
+  border: none !important;
+  font-weight: 600;
+  border-radius: 999px !important;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: none;
+}
+.btn-info:hover,
+.btn-outline-info:hover {
+  background: #67e8f9 !important;
+  color: #181a20 !important;
+}
+.btn-secondary {
+  background: #313a5a !important;
+  color: #eaeaea !important;
+  border: 1px solid #43c6ac !important;
+  border-radius: 999px !important;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+  background: #232a36 !important;
+  color: #67e8f9 !important;
+}
+@media (max-width: 576px) {
+  .form-control,
+  .form-select {
+    font-size: 1rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+  .btn-info,
+  .btn-outline-info {
+    background: #6d4c5b !important;
+    color: #f4f4f4 !important;
+    border: none !important;
+    font-weight: 600;
+    border-radius: 8px !important;
+    transition: background 0.2s, color 0.2s;
+    box-shadow: none;
+  }
+  .btn-info:hover,
+  .btn-outline-info:hover {
+    background: #a06c85 !important;
+    color: #fff !important;
+  }
+}
