@@ -280,39 +280,66 @@ async function loadProfile() {
         '<li class="list-group-item bg-dark text-secondary border-0">Could not load groups.</li>';
     }
   }
-  const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData || !sessionData.session) {
-    document.getElementById(
-      "profile-info"
-    ).innerHTML = `<div class='alert alert-warning text-center'>You must be logged in to view your profile.</div>`;
-    document.getElementById("logoutBtnProfile").style.display = "none";
-    return;
-  }
-  const { data: userData } = await supabase.auth.getUser();
-  const user = userData && userData.user ? userData.user : null;
-  if (!user) {
-    document.getElementById(
-      "profile-info"
-    ).innerHTML = `<div class='alert alert-warning text-center'>Could not load user info.</div>`;
-    document.getElementById("logoutBtnProfile").style.display = "none";
-    return;
-  }
-  document.getElementById("user-email").textContent = user.email;
-  document.getElementById("user-joined").textContent = user.created_at
-    ? new Date(user.created_at).toLocaleDateString()
-    : "-";
-  // Display Name logic
+  const profileInfoContainer = document.getElementById("profile-info");
+  const userEmailDiv = document.getElementById("user-email");
+  const userJoinedDiv = document.getElementById("user-joined");
   const displayNameInput = document.getElementById("user-display-name-input");
   const displayNameStatus = document.getElementById("user-display-name-status");
+  const saveDisplayNameBtn = document.getElementById("save-display-name-btn");
+  // Clear previous errors
+  if (profileInfoContainer) profileInfoContainer.innerHTML = "";
+  if (userEmailDiv) userEmailDiv.textContent = "-";
+  if (userJoinedDiv) userJoinedDiv.textContent = "-";
+  if (displayNameInput) displayNameInput.value = "";
+  if (displayNameStatus) displayNameStatus.textContent = "";
+  if (saveDisplayNameBtn) saveDisplayNameBtn.disabled = true;
+
+  let user = null;
+  try {
+    const { data: sessionData, error: sessionError } =
+      await supabase.auth.getSession();
+    if (sessionError || !sessionData || !sessionData.session) {
+      if (profileInfoContainer) {
+        profileInfoContainer.innerHTML = `<div class='alert alert-warning text-center'>You must be logged in to view your profile.</div>`;
+      }
+      const logoutBtn = document.getElementById("logoutBtnProfile");
+      if (logoutBtn) logoutBtn.style.display = "none";
+      return;
+    }
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    user = userData && userData.user ? userData.user : null;
+    if (userError || !user) {
+      if (profileInfoContainer) {
+        profileInfoContainer.innerHTML = `<div class='alert alert-warning text-center'>Could not load user info.</div>`;
+      }
+      const logoutBtn = document.getElementById("logoutBtnProfile");
+      if (logoutBtn) logoutBtn.style.display = "none";
+      return;
+    }
+  } catch (err) {
+    if (profileInfoContainer) {
+      profileInfoContainer.innerHTML = `<div class='alert alert-danger text-center'>Error loading user info: ${
+        err.message || err
+      }</div>`;
+    }
+    const logoutBtn = document.getElementById("logoutBtnProfile");
+    if (logoutBtn) logoutBtn.style.display = "none";
+    return;
+  }
+  // Populate user info with fallback and error feedback
+  if (userEmailDiv) userEmailDiv.textContent = user.email || "-";
+  if (userJoinedDiv)
+    userJoinedDiv.textContent = user.created_at
+      ? new Date(user.created_at).toLocaleDateString()
+      : "-";
   if (displayNameInput) {
     displayNameInput.value =
       user.user_metadata && user.user_metadata.displayname
         ? user.user_metadata.displayname
         : "";
     displayNameInput.disabled = false;
-    displayNameStatus.textContent = "";
+    if (displayNameStatus) displayNameStatus.textContent = "";
   }
-  const saveDisplayNameBtn = document.getElementById("save-display-name-btn");
   if (saveDisplayNameBtn) {
     saveDisplayNameBtn.disabled = false;
     saveDisplayNameBtn.onclick = async () => {
@@ -358,36 +385,49 @@ async function loadProfile() {
   let albumCount = 0;
   let versionCount = 0;
   let onTheWayCount = 0;
-  if (Array.isArray(albums)) {
-    for (const album of albums) {
-      // Parse versions if it's a string
-      let versions = album.versions;
-      if (typeof versions === "string") {
-        try {
-          versions = JSON.parse(versions);
-        } catch {
-          versions = [];
+  let groupCount = 0;
+  try {
+    if (Array.isArray(albums)) {
+      for (const album of albums) {
+        // Parse versions if it's a string
+        let versions = album.versions;
+        if (typeof versions === "string") {
+          try {
+            versions = JSON.parse(versions);
+          } catch {
+            versions = [];
+          }
+        }
+        if (!Array.isArray(versions)) versions = [];
+        albumCount++;
+        versionCount += versions.length > 0 ? versions.length : 1;
+        if (versions.length > 0) {
+          const filtered = versions.filter((v) => {
+            // Skipping non-object version entry
+            return v.onTheWay === true || v.onTheWay === "true";
+          });
+          onTheWayCount += filtered.length;
+          // fallback for legacy/no versions
+          onTheWayCount++;
         }
       }
-      if (!Array.isArray(versions)) versions = [];
-      albumCount++;
-      versionCount += versions.length > 0 ? versions.length : 1;
-      if (versions.length > 0) {
-        const filtered = versions.filter((v) => {
-          // Skipping non-object version entry
-          return v.onTheWay === true || v.onTheWay === "true";
-        });
-        onTheWayCount += filtered.length;
-        // fallback for legacy/no versions
-        onTheWayCount++;
-      }
+    }
+    groupCount = Array.isArray(groups) ? groups.length : 0;
+    document.getElementById("user-album-count").textContent = albumCount;
+    document.getElementById("user-version-count").textContent = versionCount;
+    document.getElementById("user-group-count").textContent = groupCount;
+    document.getElementById("user-ontheway-count").textContent = onTheWayCount;
+  } catch (err) {
+    document.getElementById("user-album-count").textContent = "-";
+    document.getElementById("user-version-count").textContent = "-";
+    document.getElementById("user-group-count").textContent = "-";
+    document.getElementById("user-ontheway-count").textContent = "-";
+    if (profileInfoContainer) {
+      profileInfoContainer.innerHTML += `<div class='alert alert-danger text-center mt-2'>Error loading collection stats: ${
+        err.message || err
+      }</div>`;
     }
   }
-  const groupCount = Array.isArray(groups) ? groups.length : 0;
-  document.getElementById("user-album-count").textContent = albumCount;
-  document.getElementById("user-version-count").textContent = versionCount;
-  document.getElementById("user-group-count").textContent = groupCount;
-  document.getElementById("user-ontheway-count").textContent = onTheWayCount;
 }
 // Export for use in authUI.js
 export { loadProfile };
