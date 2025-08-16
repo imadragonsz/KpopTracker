@@ -1,0 +1,71 @@
+# Supabase client (contains keys)
+js/api/supabaseClient.js
+# Dependency directories
+node_modules/
+bower_components/
+
+# Build output
+dist/
+build/
+dist-ssr/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Editor/project files
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# PM2 logs and dumps
+.pids/
+*.pm2
+*.pm2.log
+*.pm2.pid
+.pm2/
+
+# Misc
+*.local
+*.cache
+*.bak
+*.tmp
+*.swp
+
+# Test output
+test-output/
+coverage/
+.nyc_output/
+
+# Optional: ignore uploads or user-generated content
+uploads/
+public/uploads/

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>K-Pop Album Collection</title>
+    <!-- Bootstrap 5 CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../style.css" />
+  </head>
+  <body>
+  <!-- Navbar will be loaded dynamically -->
+  <div id="navbar-include"></div>
+  <script>
+    fetch('../components/navbar.html')
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById('navbar-include').innerHTML = html;
+      });
+  </script>
+    <!-- HERO SECTION -->
+  <section class="py-5 text-center hero-section">
+      <div class="container">
+        <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="Vinyl Icon" style="width: 90px; height: 90px; background: #232a36; border-radius: 50%; padding: 10px; border: 2px solid #43c6ac;" class="mb-3 mt-2 shadow-none" />
+        <h1 class="fw-bold mb-2" style="color: #43c6ac;">Album Collection</h1>
+        <p class="lead mb-3" style="color: #bfc9db; max-width: 600px; margin: auto;">
+          Add, edit, and browse your K-Pop albums. See your collection grow with every comeback!
+        </p>
+      </div>
+    </section>
+  <div class="container my-5 p-4 rounded main-container" style="max-width: 700px; background: #232946; width: 100%">
+      <div class="row g-3 mb-4">
+        <div class="col-12">
+          <div class="card border-info bg-dark">
+            <div class="card-body">
+              <form id="albumForm" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                  <select id="groupSelect" class="form-select" required></select>
+                </div>
+                <div class="col-12 col-md-4">
+                  <input type="text" id="album" class="form-control" placeholder="Album Name (e.g. MAP OF THE SOUL: 7)" required />
+                </div>
+                <div class="col-12 col-md-4">
+                  <select id="year" class="form-select" required></select>
+                </div>
+                <div class="col-12">
+                  <input type="url" id="albumImage" class="form-control" placeholder="Album Cover Image URL (optional)" />
+                </div>
+                <div class="col-12 d-grid mt-2">
+                  <button type="submit" class="btn btn-info fw-bold">Add Album</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Advanced Filter Bar -->
+      <div class="row g-3 mb-3 align-items-end">
+        <div class="col-12 col-md-4">
+          <input type="text" id="searchInput" class="form-control" placeholder="Search by album name..." />
+        </div>
+        <div class="col-6 col-md-3">
+          <select id="filterGroup" class="form-select">
+            <option value="">All Groups</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <select id="filterYear" class="form-select">
+            <option value="">All Years</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-2 d-flex justify-content-center align-items-center">
+          <span id="albumCount" class="fw-bold text-info text-center w-100"></span>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card border-info bg-dark">
+            <div class="card-body">
+              <ul id="albumList" class="list-group"></ul>
+              <template id="albumVersionsTemplate">
+                <div class="mt-1">
+                  <span class="fw-bold">Album Versions:</span>
+                  <span class="album-versions-list"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer
+      class="text-center py-4 mt-5"
+      style="
+        color: #67e8f9;
+        background: rgba(34, 41, 70, 0.98);
+        border-radius: 0 0 18px 18px;
+      "
+    >
+      <div class="container">
+        <small
+          >K-Pop Album Tracker &copy; 2025. Made with
+          <span style="color: #ff6f61">♥</span> for the K-Pop community. |
+          <a href="#" style="color: #43c6ac">Privacy Policy</a> |
+          <a href="#" style="color: #43c6ac">Terms</a></small
+        >
+      </div>
+    </footer>
+    <!-- Edit Album Modal -->
+    <div
+      class="modal fade"
+      id="editAlbumModal"
+      tabindex="-1"
+      aria-labelledby="editAlbumModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header">
+            <h5 class="modal-title" id="editAlbumModalLabel">Edit Album</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="editAlbumForm">
+              <div class="mb-3">
+                <label for="editGroup" class="form-label">Group Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editGroup"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editAlbum" class="form-label">Album Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editAlbum"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editYear" class="form-label">Year</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="editYear"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editImage" class="form-label"
+                  >Album Image URL</label
+                >
+                <input
+                  type="url"
+                  class="form-control"
+                  id="editImage"
+                  placeholder="Album Image URL (optional)"
+                />
+              </div>
+              <div class="mb-3">
+                <label for="editVersions" class="form-label"
+                  >Album Versions (comma separated)</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editVersions"
+                  placeholder="e.g. Photobook, Limited, Jewel Case"
+                />
+              </div>
+              <button type="submit" class="btn btn-info fw-bold">
+                Save Changes
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Album Info Modal -->
+    <div
+      class="modal fade"
+      id="albumInfoModal"
+      tabindex="-1"
+      aria-labelledby="albumInfoModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header">
+            <h5 class="modal-title" id="albumInfoModalLabel">Album Info</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="albumInfoBody">
+            <!-- Album info will be injected by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="../js/authUI.js"></script>
+    <script type="module" src="../js/api/supabaseClient.js" defer></script>
+    <script type="module" src="../js/api/groupApi.js" defer></script>
+    <script type="module" src="../js/api/albumApi.js" defer></script>
+    <script type="module" src="../js/pages/indexPage.js" defer></script>
+  </body>
+</html>

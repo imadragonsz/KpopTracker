@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Profile | K-Pop Album Tracker</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../style.css" />
+  </head>
+  <body>
+    <!-- Navbar will be loaded dynamically -->
+    <div id="navbar-include"></div>
+    <script>
+      fetch("../components/navbar.html")
+        .then((res) => res.text())
+        .then((html) => {
+          document.getElementById("navbar-include").innerHTML = html;
+        });
+    </script>
+    <div
+      class="container my-5 p-4 rounded"
+      style="max-width: 600px; background: #232946; width: 100%"
+    >
+      <div class="text-center mb-4">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/727/727245.png"
+          alt="User Icon"
+          style="
+            width: 90px;
+            height: 90px;
+            background: #232a36;
+            border-radius: 50%;
+            padding: 10px;
+            border: 2px solid #43c6ac;
+          "
+          class="mb-3 mt-2 shadow-none"
+        />
+        <h1 class="fw-bold mb-2" style="color: #43c6ac">My Profile</h1>
+        <p
+          class="lead mb-3"
+          style="color: #bfc9db; max-width: 600px; margin: auto"
+        >
+          View your account details, stats, and collection. Your K-Pop journey
+          at a glance!
+        </p>
+      </div>
+      <div class="row g-3 mb-4">
+        <div class="col-6">
+          <div class="card text-center border-info bg-dark h-100">
+            <div class="card-body py-3">
+              <div class="fw-bold text-info mb-1">Email</div>
+              <div id="user-email" class="fs-6"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card text-center border-info bg-dark h-100">
+            <div class="card-body py-3">
+              <div class="fw-bold text-info mb-1">Joined</div>
+              <div id="user-joined" class="fs-6"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card text-center border-info bg-dark h-100">
+            <div class="card-body py-3">
+              <div class="fw-bold text-info mb-1">Albums</div>
+              <div id="user-album-count" class="fs-6"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card text-center border-info bg-dark h-100">
+            <div class="card-body py-3">
+              <div class="fw-bold text-info mb-1">Groups</div>
+              <div id="user-group-count" class="fs-6"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row mt-4 g-3">
+        <div class="col-12 col-md-6">
+          <div class="card border-info bg-dark h-100">
+            <div class="card-body">
+              <h5 class="text-info mb-2">Albums</h5>
+              <ul id="profile-album-list" class="list-group small"></ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <div class="card border-info bg-dark h-100">
+            <div class="card-body">
+              <h5 class="text-info mb-2">Groups</h5>
+              <ul id="profile-group-list" class="list-group small"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="text-center mt-4">
+        <!-- Log Out button is injected by JS in the navbar -->
+      </div>
+    </div>
+    <footer
+      class="text-center py-4 mt-5"
+      style="
+        color: #67e8f9;
+        background: rgba(34, 41, 70, 0.98);
+        border-radius: 0 0 18px 18px;
+      "
+    >
+      <div class="container">
+        <small
+          >K-Pop Album Tracker &copy; 2025. Made with
+          <span style="color: #ff6f61">♥</span> for the K-Pop community. |
+          <a href="#" style="color: #43c6ac">Privacy Policy</a> |
+          <a href="#" style="color: #43c6ac">Terms</a></small
+        >
+      </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="../js/authUI.js"></script>
+    <script type="module" src="../js/pages/profilePage.js"></script>
+  </body>
+</html>

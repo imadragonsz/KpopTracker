@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>K-Pop Album Tracker</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <!-- Navbar will be loaded dynamically -->
+    <div id="navbar-include"></div>
+
+    <script>
+      fetch("../components/navbar.html")
+        .then((res) => res.text())
+        .then((html) => {
+          document.getElementById("navbar-include").innerHTML = html;
+          // Dynamically load authUI.js as a module after navbar is present
+          const script = document.createElement("script");
+          script.type = "module";
+          script.src = "./js/authUI.js";
+          document.body.appendChild(script);
+        });
+    </script>
+
+    <!-- HERO SECTION -->
+    <section class="py-5 text-center">
+      <div class="container">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/727/727245.png"
+          alt="K-Pop Vinyl"
+          style="
+            width: 100px;
+            height: 100px;
+            background: #232a36;
+            border-radius: 50%;
+            padding: 12px;
+            border: 2px solid #43c6ac;
+          "
+          class="mb-3 mt-2 shadow-none"
+        />
+        <h1 class="fw-bold mb-2" style="color: #43c6ac">
+          Your K-Pop Album Library
+        </h1>
+        <p
+          class="lead mb-4"
+          style="color: #bfc9db; max-width: 600px; margin: auto"
+        >
+          Add, browse, and celebrate every album in your K-Pop journey. This is
+          your digital shelf—make it shine!
+        </p>
+        <a
+          href="/pages/albumCollection.html"
+          class="btn btn-info btn-lg px-5 fw-bold"
+          >Go to Album Collection</a
+        >
+      </div>
+    </section>
+
+    <!-- FEATURE HIGHLIGHTS -->
+    <section class="container py-5">
+      <div class="row g-4 justify-content-center">
+        <div class="col-md-4">
+          <div class="card h-100 border-info">
+            <div class="card-body">
+              <h5 class="card-title" style="color: #67e8f9">
+                Album Collection
+              </h5>
+              <p class="card-text">
+                Add, edit, and browse your K-Pop albums. See your collection
+                grow with every comeback!
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 border-info">
+            <div class="card-body">
+              <h5 class="card-title" style="color: #67e8f9">
+                Group & Member Management
+              </h5>
+              <p class="card-text">
+                Track your favorite groups and members, celebrate birthdays and
+                milestones, and keep your K-Pop universe organized!
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100 border-info">
+            <div class="card-body">
+              <h5 class="card-title" style="color: #67e8f9">
+                Private & Portable
+              </h5>
+              <p class="card-text">
+                Your collection, your rules. Log in to keep your albums safe and
+                access them anywhere—no more lost lists or spreadsheets.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMUNITY & VALUE SECTION -->
+    <section class="container py-4">
+      <div class="row align-items-center">
+        <div class="col-md-7 mb-3 mb-md-0">
+          <h3 class="fw-bold" style="color: #43c6ac">
+            Why use K-Pop Album Tracker?
+          </h3>
+          <ul class="list-unstyled mb-2" style="color: #eaeaea">
+            <li>• No more lost sticky notes or endless spreadsheets</li>
+            <li>• See your collection stats at a glance</li>
+            <li>• Designed for fans, by a fan—no ads, no paywall</li>
+            <li>• Suggest features or report bugs anytime</li>
+          </ul>
+          <p class="mb-0" style="color: #bfc9db">
+            This project is a labor of love for the K-Pop community. Your
+            feedback and ideas are always welcome!
+          </p>
+        </div>
+        <div class="col-md-5 text-center">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/727/727245.png"
+            alt="Vinyl Icon"
+            class="img-fluid rounded border border-info"
+            style="max-width: 120px; background: #232a36; padding: 16px"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer
+      class="text-center py-4 mt-5"
+      style="color: #67e8f9; background: #232946; border-radius: 0 0 18px 18px"
+    >
+      <div class="container">
+        <small>
+          K-Pop Album Tracker &copy; 2025. Made with
+          <span style="color: #ff6f61">♥</span> for the K-Pop community. |
+          <a href="#" style="color: #43c6ac">Privacy Policy</a> |
+          <a href="#" style="color: #43c6ac">Terms</a>
+        </small>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
