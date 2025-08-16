@@ -15,12 +15,6 @@ K-Pop Album Tracker is a web application for K-Pop fans to manage, track, and vi
 
 ---
 
-# K-Pop Album Tracker
-
-K-Pop Album Tracker is a web application for K-Pop fans to manage, track, and visualize their physical album collections. It features a modern, responsive UI and uses Supabase for authentication and data storage.
-
----
-
 ## ✨ Features
 
 - 🎵 **Album Collection Management:** Add, edit, and delete albums and versions, including group, release date, and special versions.
