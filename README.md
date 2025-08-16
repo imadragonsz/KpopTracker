@@ -36,7 +36,32 @@ K-Pop Album Tracker is a web application designed for K-Pop fans to easily manag
      export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
      ```
 
-4. **Open `index.html` in your browser to start using the app locally.**
+4. **Set up your Supabase database:**
+
+   - You will need at least two tables: `albums` and `groups`. Here is an example SQL command to create the basic structure:
+
+     ```sql
+     -- Albums table
+     create table if not exists public.albums (
+        id uuid primary key default gen_random_uuid(),
+        name text not null,
+        group text not null,
+        versions jsonb,
+        created_at timestamptz default now(),
+        updated_at timestamptz default now(),
+        user_id uuid references auth.users(id)
+     );
+
+     -- Groups table
+     create table if not exists public.groups (
+        id uuid primary key default gen_random_uuid(),
+        name text not null,
+        created_at timestamptz default now(),
+        user_id uuid references auth.users(id)
+     );
+     ```
+
+   - You may need to adjust or extend these tables to fit your needs (e.g., add more fields, indexes, or relationships).
 
 ## Contributing
 
