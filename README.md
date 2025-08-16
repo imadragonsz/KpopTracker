@@ -133,9 +133,3 @@ Contributions, bug reports, and feature requests are welcome! Please open an iss
 ## 📝 License
 
 MIT License
-
----
-
-Made with ♥ for the K-Pop community.
-
----
