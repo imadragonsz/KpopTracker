@@ -122,8 +122,6 @@ K-Pop Album Tracker is a web application for K-Pop fans to manage, track, and vi
       - Repeat similar policies for `groups` and `members` tables.
       - For more details, see the [Supabase Auth docs](https://supabase.com/docs/guides/auth).
 
-   ***
-
 ---
 
 ## 🤝 Contributing
