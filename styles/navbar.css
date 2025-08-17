@@ -1,3 +1,22 @@
+/* Ensure navbar and container have fixed height to keep toggler in place */
+.navbar-custom,
+.navbar-custom .container-fluid {
+  height: 60px;
+  min-height: 60px;
+  box-sizing: border-box;
+}
+@media (max-width: 991.98px) {
+  .navbar-custom .container-fluid {
+    position: relative;
+  }
+  .navbar-toggler {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1300;
+  }
+}
 /* Improve visibility of the default Bootstrap toggler icon */
 .navbar-toggler-icon {
   filter: brightness(0) saturate(100%) invert(70%) sepia(80%) saturate(400%)
@@ -36,7 +55,11 @@
   margin-right: 0.5rem;
   border-radius: 6px;
   transition: background 0.2s, color 0.2s;
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.7rem;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .navbar-nav .nav-link.active,
 .navbar-nav .nav-link:hover {
@@ -98,10 +121,7 @@
 }
 .navbar-custom .navbar-nav {
   flex-direction: row !important;
-
-/* --- NAVBAR BASE STYLES --- */
-.navbar {
-  border-bottom: 2px solid #43c6ac33;
+  /* --- NAVBAR BASE STYLES --- */
   box-shadow: 0 2px 12px 0 #232a3620;
 }
 
@@ -161,12 +181,8 @@
 }
 .navbar-custom .navbar-nav .nav-link {
   font-size: 0.98rem;
-  padding: 0.35rem 0.7rem;
   margin: 0 0.08rem;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* Inherit height and flex from .navbar-nav .nav-link for alignment */
 }
 
 /* --- PROFILE BUTTON --- */
@@ -212,74 +228,6 @@
   display: none !important;
 }
 
-/* --- RESPONSIVE: MOBILE NAVBAR --- */
-@media (max-width: 991.98px) {
-  .navbar-collapse {
-    background: #232946 !important;
-    border-radius: 0 0 18px 18px;
-    box-shadow: 0 4px 24px 0 #232a3640;
-    padding: 1.5rem 1rem 2rem 1rem;
-    margin-top: 0.5rem;
-  }
-  .navbar-nav {
-    gap: 0.5rem !important;
-    align-items: flex-start !important;
-  }
-  .navbar-nav .nav-link {
-    font-size: 1.15rem;
-    padding: 0.75rem 1.2rem;
-    border-radius: 12px;
-    margin-bottom: 0.25rem;
-    color: #fff !important;
-    background: none !important;
-    text-align: left;
-  }
-  .navbar-nav .nav-link.active {
-    background: #43c6ac !important;
-    color: #181a20 !important;
-    font-weight: 700;
-  }
-  #profileNavContainer {
-    margin-top: 1.5rem;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  #profileNavContainer .profile-actions {
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
-    width: 100%;
-    margin-bottom: 0.25rem;
-  }
-  #profileNavContainer .btn,
-  #profileNavContainer .btn-info {
-    border-radius: 999px !important;
-    font-size: 1rem;
-    padding: 0.5rem 1.5rem !important;
-    min-width: 110px;
-    font-weight: 700;
-    background: #43c6ac !important;
-    color: #181a20 !important;
-    box-shadow: none;
-    margin: 0;
-  }
-  #profileNavContainer .btn-info:hover {
-    background: #67e8f9 !important;
-    color: #181a20 !important;
-  }
-  #profileNavContainer .user-email {
-    color: #fff;
-    font-size: 0.98rem;
-    margin-left: 0.1rem;
-    margin-top: 0.1rem;
-    opacity: 0.85;
-    font-weight: 400;
-    padding-left: 0.2rem;
-  }
-}
 .navbar-custom #profileNavLink {
   margin-left: 1rem;
   margin-right: 0.5rem;
@@ -328,7 +276,7 @@
   }
   .navbar-nav .nav-link {
     font-size: 1.15rem;
-    padding: 0.75rem 1.2rem;
+    max-width: 350px;
     border-radius: 12px;
     margin-bottom: 0.25rem;
     color: #fff !important;
@@ -393,10 +341,8 @@
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px 0 #232a3640;
   border-radius: 14px;
-  margin-top: 24px;
-  padding: 2rem 1.5rem 2rem 1.5rem;
   border: 1.5px solid #43c6ac55;
-  max-width: 350px;
+
   width: 90vw;
   margin-left: auto;
   margin-right: auto;
@@ -406,9 +352,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
+
   gap: 1.2rem;
-  margin-bottom: 2rem;
 }
 
 .navbar-collapse .nav-link,
@@ -477,73 +422,4 @@
 #profileNavLink.d-none,
 .navbar-profile-btn.d-none {
   display: none !important;
-}
-
-.navbar.navbar-custom.fixed-top,
-.navbar-custom {
-  background: linear-gradient(90deg, #232946 60%, #232a36 100%) !important;
-  background-color: rgba(35, 41, 70, 0.92) !important;
-  backdrop-filter: blur(12px);
-  border-bottom: 2.5px solid #43c6ac55;
-  border-radius: 0 0 22px 22px;
-  box-shadow: 0 6px 32px 0 #232a3640, 0 1.5px 0 0 #43c6ac33;
-  min-height: 60px;
-  height: 60px;
-  padding: 0 1vw;
-  z-index: 1200;
-  transition: background 0.25s, box-shadow 0.25s;
-}
-
-.navbar-custom .navbar-brand {
-  color: #43c6ac !important;
-  font-size: 1.15rem;
-  font-weight: 900;
-  letter-spacing: 1.5px;
-  text-shadow: 0 2px 8px #43c6ac22;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding-left: 0.1rem;
-  padding-right: 0.4rem;
-  height: 60px;
-  transition: color 0.2s, text-shadow 0.2s;
-}
-
-.navbar-custom .navbar-brand img {
-  width: 28px;
-  height: 28px;
-  filter: drop-shadow(0 2px 8px #43c6ac33);
-}
-
-.navbar-custom .navbar-brand:hover {
-  color: #67e8f9 !important;
-  text-shadow: 0 4px 16px #67e8f955;
-}
-
-.navbar-custom .navbar-nav {
-  flex-direction: row !important;
-  align-items: stretch !important;
-  gap: 0.2rem !important;
-  height: 60px;
-  display: flex;
-  justify-content: flex-start;
-}
-
-.navbar-custom .nav-item {
-  display: flex !important;
-  align-items: center !important;
-  margin: 0 0.1rem !important;
-  height: 100%;
-  /* Center content vertically */
-  justify-content: center;
-}
-
-.navbar-custom .navbar-nav .nav-link {
-  font-size: 0.98rem;
-  padding: 0.35rem 0.7rem;
-  margin: 0 0.08rem;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }

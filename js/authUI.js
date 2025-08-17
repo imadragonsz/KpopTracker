@@ -1,3 +1,5 @@
+// Expose showLoginModal globally so non-module scripts can trigger it
+window.showLoginModal = showLoginModal;
 // Handles login/logout UI and modal logic
 import {
   signIn,
@@ -8,54 +10,30 @@ import {
 } from "./auth.js";
 
 const navbarRight = document.createElement("div");
-navbarRight.className = "d-flex ms-auto align-items-center";
-navbarRight.innerHTML = `
-  <button id="loginBtn" class="btn btn-outline-info btn-sm me-2">Login</button>
-  <a id="profileNavLink" class="btn btn-info ms-2 fw-bold navbar-profile-btn d-none" href="/pages/profile.html" style="display:none;">My Profile</a>
-  <button id="logoutBtn" class="btn btn-outline-secondary btn-sm d-none ms-2">Logout</button>
-  <span id="userEmail" class="text-light small ms-2 d-none"></span>
-`;
 
 function insertAuthButtons() {
-  // Try to find the navbar-collapse or fallback to .container-fluid
-  let nav = document.querySelector(".navbar .navbar-collapse");
-  if (!nav) {
-    nav = document.querySelector(".navbar .container-fluid");
+  // Only attach event listeners to existing static buttons
+  const loginBtn = document.getElementById("loginBtn");
+  if (loginBtn && !loginBtn.hasAttribute("data-listener")) {
+    loginBtn.addEventListener("click", () => {
+      try {
+        showLoginModal();
+      } catch (err) {
+        console.error("Error on loginBtn click:", err);
+      }
+    });
+    loginBtn.setAttribute("data-listener", "true");
   }
-  if (nav && !document.getElementById("loginBtn")) {
-    nav.appendChild(navbarRight);
-    // Remove the old profileNavContainer if present
-    const profileNavContainer = document.getElementById("profileNavContainer");
-    if (profileNavContainer) {
-      profileNavContainer.remove();
-    }
-    // Attach login button event listener immediately after insertion
-    const loginBtn = document.getElementById("loginBtn");
-    if (loginBtn) {
-      loginBtn.addEventListener("click", () => {
-        try {
-          showLoginModal();
-        } catch (err) {
-          console.error("Error on loginBtn click:", err);
-        }
-      });
-    }
-  }
+  // (Optional) Attach listeners for logout/profile if needed
 }
 
 // Retry injection if navbar not found at first
 function ensureAuthButtonsInjected() {
-  let attempts = 0;
-  const maxAttempts = 10;
-  const interval = setInterval(() => {
-    if (document.getElementById("loginBtn")) {
-      clearInterval(interval);
-      return;
-    }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", insertAuthButtons);
+  } else {
     insertAuthButtons();
-    attempts++;
-    if (attempts >= maxAttempts) clearInterval(interval);
-  }, 200);
+  }
 }
 
 function showLoginModal() {

@@ -1,3 +1,22 @@
+/* Make list-group text more visible on dark backgrounds */
+.list-group {
+  --bs-list-group-color: #eaeaea;
+}
+/* Make album pagination info more visible */
+.album-pagination-info,
+.version-pagination-info,
+.mx-2.page-info {
+  color: #67e8f9;
+  background: #181a20;
+  border-radius: 8px;
+  padding: 0.18em 0.9em;
+  font-weight: 600;
+  font-size: 1.08em;
+  letter-spacing: 0.03em;
+  box-shadow: 0 1px 6px 0 #232a3620;
+  margin: 0 0.5em;
+  display: inline-block;
+}
 @media (max-width: 700px) {
   .album-card-flex {
     flex-direction: column;
@@ -75,20 +94,16 @@
 /* Make album cards utilize full width of container */
 .redesigned-album-card {
   max-width: 900px;
-  width: 100%;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  gap: 0.4em;
   width: 100%;
-  margin-top: 0.1em;
-}
-.redesigned-album-card.p-3 {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-  border: none !important;
-  background: transparent !important;
+  background: #232946;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px 0 #232a3620;
+  border: 1.5px solid #313a5a;
+  margin-bottom: 1.2em;
 }
 .album-card-flex {
   display: flex;

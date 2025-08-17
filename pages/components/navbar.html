@@ -43,9 +43,23 @@
           >
         </li>
       </ul>
-      <ul class="navbar-nav ms-auto gap-2 align-items-center d-flex">
-        <li class="nav-item" id="profileNavContainer"></li>
-      </ul>
+      <div class="d-flex align-items-center">
+  <button id="loginBtn" class="btn btn-outline-info btn-sm me-2 d-none">
+          Login
+        </button>
+        <a
+          id="profileNavLink"
+          class="btn btn-info ms-2 fw-bold navbar-profile-btn"
+          href="/pages/profile.html"
+          >My Profile</a
+        >
+        <button id="logoutBtn" class="btn btn-outline-secondary btn-sm ms-2">
+          Logout
+        </button>
+        <span id="userEmail" class="text-light small ms-2"
+          >mittchelk@gmail.com</span
+        >
+      </div>
     </div>
   </div>
 </nav>
@@ -61,4 +75,71 @@
       link.removeAttribute("aria-current");
     }
   });
+
+  // Collapse navbar if width > 990px, only after Bootstrap is loaded
+  function collapseNavbarOnDesktop() {
+    const navbarCollapse = document.getElementById("navbarNav");
+    const toggler = document.querySelector(".navbar-toggler");
+    if (window.innerWidth > 990 && navbarCollapse) {
+      // Always call collapse.hide() to sync Bootstrap's state
+      if (window.bootstrap && window.bootstrap.Collapse) {
+        const collapse =
+          window.bootstrap.Collapse.getOrCreateInstance(navbarCollapse);
+        collapse.hide();
+      }
+      // Fallback: forcibly remove 'show' class
+      navbarCollapse.classList.remove("show");
+      // Reset toggler aria-expanded
+      if (toggler) {
+        toggler.setAttribute("aria-expanded", "false");
+        toggler.blur();
+      }
+    }
+  }
+  function setupCollapseListener() {
+    if (window.bootstrap && window.bootstrap.Collapse) {
+      window.addEventListener("resize", collapseNavbarOnDesktop);
+      collapseNavbarOnDesktop();
+    } else {
+      setTimeout(setupCollapseListener, 100);
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupCollapseListener);
+  } else {
+    setupCollapseListener();
+  }
+</script>
+</script>
+<script>
+// Use event delegation to ensure loginBtn always works, even if dynamically rendered
+document.addEventListener("click", function(e) {
+  const btn = e.target.closest && e.target.closest("#loginBtn");
+  if (btn) {
+    console.log("loginBtn pressed");
+    window.dispatchEvent(new CustomEvent("show-login-modal"));
+  }
+});
+</script>
+<script>
+// Listen for the custom event and trigger the modal using authUI.js logic if available
+window.addEventListener("show-login-modal", () => {
+  try {
+    if (typeof showLoginModal === "function") {
+      showLoginModal();
+    } else {
+      // fallback: try to trigger modal if available
+      const modal = document.getElementById("authModal");
+      if (modal && window.bootstrap) {
+        const modalInstance = new window.bootstrap.Modal(modal);
+        modalInstance.show();
+      } else {
+        console.error("Login modal could not be shown: showLoginModal() missing and no #authModal found or Bootstrap not loaded.");
+      }
+    }
+  } catch (err) {
+    console.error("Error while trying to show login modal:", err);
+  }
+});
+</script>
 </script>

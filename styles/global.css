@@ -1,15 +1,11 @@
 /* Ensure card text is visible on dark backgrounds for profile page */
 .card.bg-dark,
 .card.bg-dark .card-body,
-.card.bg-dark * {
-  color: #eaeaea !important;
-}
 
 /* General card background and border for theme consistency */
 .card,
 .card.bg-dark,
 .card-body {
-  background: #232946 !important;
   border-color: #43c6ac !important;
   --bs-card-bg: #232946 !important;
   color: #eaeaea !important;
@@ -40,10 +36,6 @@ body {
 }
 
 /* --- Custom Classes for Kpop Album Tracker Pages --- */
-.profile-bg {
-  background: #181a20 !important;
-  min-height: 100vh;
-}
 
 .main-container {
   background: #232946 !important;
@@ -143,12 +135,12 @@ body {
 /* Ensure spacing below navbar for text-center elements (index.html hero) */
 .py-5.text-center,
 .text-center.py-5 {
-  margin-top: 75px !important;
+  margin-top: 25px !important;
 }
 @media (max-width: 576px) {
   .py-5.text-center,
   .text-center.py-5 {
-    margin-top: 72px !important;
+    margin-top: 10px !important;
   }
 }
 
@@ -209,11 +201,6 @@ body {
   .lead {
     font-size: 1rem !important;
   }
-}
-
-#userEmail {
-  margin-left: 0.25rem !important;
-  margin-right: 0.5rem !important;
 }
 
 /* Custom Scrollbar Styles */

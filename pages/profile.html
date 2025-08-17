@@ -13,15 +13,62 @@
   <link rel="stylesheet" href="../styles/album-cards.css" />
   <link rel="stylesheet" href="../styles/modals.css" />
   <link rel="stylesheet" href="../styles/forms.css" />
-  <body class="profile-bg">
+  <body class="profile-bg" style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, #232946 10%, #181a20 20%); color: #eaeaea; margin: 0; min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
     
     <div id="navbar-include"></div>
     <script>
-      fetch("./components/navbar.html")
-        .then((res) => res.text())
-        .then((html) => {
-          document.getElementById("navbar-include").innerHTML = html;
-        });
+      // Only load and inject the navbar if not already present
+      if (!document.getElementById('navbar-include').dataset.loaded) {
+        fetch('./components/navbar.html')
+          .then(res => res.text())
+          .then(html => {
+            document.getElementById('navbar-include').innerHTML = html;
+            document.getElementById('navbar-include').dataset.loaded = 'true';
+            // Re-initialize Bootstrap Collapse for navbar toggler to fix lag
+            setTimeout(() => {
+              const toggler = document.querySelector('.navbar-toggler');
+              const collapse = document.getElementById('navbarNav');
+              if (window.bootstrap && toggler && collapse) {
+                new window.bootstrap.Collapse(collapse, { toggle: false });
+              }
+            }, 0);
+            // Only load scripts once
+            if (!window._navbarScriptsLoaded) {
+              window._navbarScriptsLoaded = true;
+              const supabaseScript = document.createElement('script');
+              supabaseScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js';
+              supabaseScript.onload = () => {
+                const scripts = [
+                  '../js/authUI.js',
+                  '../js/api/supabaseClient.js',
+                  '../js/api/groupApi.js',
+                  '../js/api/albumApi.js',
+                  '../js/pages/profilePage.js'
+                ];
+                scripts.forEach(src => {
+                  const s = document.createElement('script');
+                  s.type = 'module';
+                  s.src = src;
+                  document.body.appendChild(s);
+                });
+                // After all scripts, check for login modal flag
+                setTimeout(() => {
+                  if (sessionStorage.getItem('showLoginOnProfilePage')) {
+                    sessionStorage.removeItem('showLoginOnProfilePage');
+                    setTimeout(() => {
+                      const loginBtn = document.getElementById('loginBtn');
+                      const logoutBtn = document.getElementById('logoutBtn');
+                      if (loginBtn && (!logoutBtn || logoutBtn.classList.contains('d-none'))) {
+                        loginBtn.click();
+                      }
+                    }, 500);
+                  }
+                }, 1000);
+              };
+              document.body.appendChild(supabaseScript);
+            }
+          });
+      }
     </script>
 
     

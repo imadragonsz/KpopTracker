@@ -18,49 +18,58 @@
   
   <div id="navbar-include"></div>
   <script>
-  fetch('./components/navbar.html')
-    .then(res => res.text())
-    .then(html => {
-      document.getElementById('navbar-include').innerHTML = html;
-      // Re-initialize Bootstrap collapse for dynamically loaded navbar
-      if (window.bootstrap && window.bootstrap.Collapse) {
-        document.querySelectorAll('.navbar-collapse').forEach(el => {
-          new window.bootstrap.Collapse(el, {toggle: false});
-        });
-      }
-      // Dynamically load Supabase CDN, then main JS files (Bootstrap JS is now in HTML)
-      const supabaseScript = document.createElement('script');
-      supabaseScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js';
-      supabaseScript.onload = () => {
-        const scripts = [
-          '../js/authUI.js',
-          '../js/api/supabaseClient.js',
-          '../js/api/groupApi.js',
-          '../js/api/albumApi.js',
-          '../js/pages/albumCollectionPage.js'
-        ];
-        scripts.forEach(src => {
-          const s = document.createElement('script');
-          s.type = 'module';
-          s.src = src;
-          document.body.appendChild(s);
-        });
-        // After all scripts, check for login modal flag
-        setTimeout(() => {
-          if (sessionStorage.getItem('showLoginOnAlbumPage')) {
-            sessionStorage.removeItem('showLoginOnAlbumPage');
-            setTimeout(() => {
-              const loginBtn = document.getElementById('loginBtn');
-              const logoutBtn = document.getElementById('logoutBtn');
-              if (loginBtn && (!logoutBtn || logoutBtn.classList.contains('d-none'))) {
-                loginBtn.click();
-              }
-            }, 500);
+    // Only load and inject the navbar if not already present
+    if (!document.getElementById('navbar-include').dataset.loaded) {
+      fetch('./components/navbar.html')
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById('navbar-include').innerHTML = html;
+          document.getElementById('navbar-include').dataset.loaded = 'true';
+          // Re-initialize Bootstrap Collapse for navbar toggler to fix lag
+          setTimeout(() => {
+            const toggler = document.querySelector('.navbar-toggler');
+            const collapse = document.getElementById('navbarNav');
+            if (window.bootstrap && toggler && collapse) {
+              new window.bootstrap.Collapse(collapse, { toggle: false });
+            }
+          }, 0);
+          // Only load scripts once
+          if (!window._navbarScriptsLoaded) {
+            window._navbarScriptsLoaded = true;
+            const supabaseScript = document.createElement('script');
+            supabaseScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js';
+            supabaseScript.onload = () => {
+              const scripts = [
+                '../js/authUI.js',
+                '../js/api/supabaseClient.js',
+                '../js/api/groupApi.js',
+                '../js/api/albumApi.js',
+                '../js/pages/albumCollectionPage.js'
+              ];
+              scripts.forEach(src => {
+                const s = document.createElement('script');
+                s.type = 'module';
+                s.src = src;
+                document.body.appendChild(s);
+              });
+              // After all scripts, check for login modal flag
+              setTimeout(() => {
+                if (sessionStorage.getItem('showLoginOnAlbumPage')) {
+                  sessionStorage.removeItem('showLoginOnAlbumPage');
+                  setTimeout(() => {
+                    const loginBtn = document.getElementById('loginBtn');
+                    const logoutBtn = document.getElementById('logoutBtn');
+                    if (loginBtn && (!logoutBtn || logoutBtn.classList.contains('d-none'))) {
+                      loginBtn.click();
+                    }
+                  }, 500);
+                }
+              }, 1000);
+            };
+            document.body.appendChild(supabaseScript);
           }
-        }, 1000);
-      };
-      document.body.appendChild(supabaseScript);
-    });
+        });
+    }
   </script>
     
   <section class="py-5 text-center hero-section">
@@ -72,7 +81,7 @@
         </p>
       </div>
     </section>
-  <div class="container p-4 rounded shadow-lg main-container" style="max-width: 900px; background: #232946; width: 100%; margin-top: 90px;">
+  <div class="container p-4 rounded shadow-lg main-container" style="max-width: 900px; background: #232946; width: 100%; margin-top: 20px;">
       <div class="row g-3 mb-4">
         <div class="col-12">
           <div class="card border-info bg-dark">
