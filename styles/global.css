@@ -1,10 +1,25 @@
-/* Ensure card text is visible on dark backgrounds for profile page */
-.card.bg-dark,
-.card.bg-dark .card-body,
+/* Flex child for sticky footer layout */
+.main-content {
+  flex: 1 0 auto;
+}
+/* Sticky footer for .text-center.py-4.mt-5 */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+/* Highly specific selector to override Bootstrap's .py-4 */
+footer.text-center.py-4.mt-5,
+.text-center.py-4.mt-5 {
+  margin-top: auto;
+  padding-top: 0 !important;
+}
 
-/* General card background and border for theme consistency */
+/* Add space above footer by increasing margin-bottom on main content containers */
+/* Ensure card text is visible on dark backgrounds for profile page and general card background and border for theme consistency */
 .card,
 .card.bg-dark,
+.card-body,
 .card-body {
   border-color: #43c6ac !important;
   --bs-card-bg: #232946 !important;
@@ -44,6 +59,7 @@ body {
   max-width: 900px;
   width: 100%;
   margin-top: 90px;
+  margin-bottom: 2.5rem !important;
 }
 
 .group-count-badge {
