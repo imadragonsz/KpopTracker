@@ -198,6 +198,7 @@ export function renderAlbums() {
       : 0;
     let totalPages = 1;
     let page = 1;
+    let paginationControls = "";
     if (totalVersions > 0) {
       if (!item._versionPage) item._versionPage = 1;
       totalPages = Math.ceil(totalVersions / VERSIONS_PER_PAGE);
@@ -227,11 +228,11 @@ export function renderAlbums() {
             typeof obj === "object" &&
             typeof obj.name === "string"
           ) {
-            return `<span class='badge bg-info text-dark me-1 mb-1'>${
+            return `<span class='badge bg-info text-dark me-1 mb-1 d-inline-flex align-items-center justify-content-center' style='min-width:90px;min-height:32px;vertical-align:middle;'>${
               obj.name
             }${
               obj.onTheWay
-                ? " <span class='badge bg-warning text-dark ms-1'>On the Way</span>"
+                ? " <span class='badge bg-warning text-dark ms-1 d-inline-flex align-items-center justify-content-center' style='font-size:0.85em;height:24px;vertical-align:middle;'>On the Way</span>"
                 : ""
             }</span>`;
           } else {
@@ -239,6 +240,35 @@ export function renderAlbums() {
           }
         })
         .join("");
+      // Only show pagination controls if more than 4 versions
+      if (totalVersions > 4) {
+        paginationControls = `
+          <div class='version-pagination-controls'>
+            <button class='btn btn-sm btn-outline-secondary version-prev-btn' data-album-id='${
+              item.id
+            }' ${
+          typeof page === "undefined" ||
+          typeof totalPages === "undefined" ||
+          Number(page) === 1 ||
+          Number(totalPages) === 1
+            ? "disabled"
+            : ""
+        }>Prev</button>
+            <span class='mx-2'>Page ${
+              typeof page !== "undefined" ? page : 1
+            } of ${typeof totalPages !== "undefined" ? totalPages : 1}</span>
+            <button class='btn btn-sm btn-outline-secondary version-next-btn' data-album-id='${
+              item.id
+            }' ${
+          typeof page === "undefined" ||
+          typeof totalPages === "undefined" ||
+          Number(page) === Number(totalPages) ||
+          Number(totalPages) === 1
+            ? "disabled"
+            : ""
+        }>Next</button>
+          </div>`;
+      }
     }
     li.innerHTML = `
       <div class="album-card-flex">
@@ -255,31 +285,7 @@ export function renderAlbums() {
             "<span class='album-card-version-placeholder'>&nbsp;</span>"
           }</div>
           <div class="album-card-controls-row">
-            <div class='version-pagination-controls'>
-              <button class='btn btn-sm btn-outline-secondary version-prev-btn' data-album-id='${
-                item.id
-              }' ${
-      typeof page === "undefined" ||
-      typeof totalPages === "undefined" ||
-      Number(page) === 1 ||
-      Number(totalPages) === 1
-        ? "disabled"
-        : ""
-    }>Prev</button>
-              <span class='mx-2'>Page ${
-                typeof page !== "undefined" ? page : 1
-              } of ${typeof totalPages !== "undefined" ? totalPages : 1}</span>
-              <button class='btn btn-sm btn-outline-secondary version-next-btn' data-album-id='${
-                item.id
-              }' ${
-      typeof page === "undefined" ||
-      typeof totalPages === "undefined" ||
-      Number(page) === Number(totalPages) ||
-      Number(totalPages) === 1
-        ? "disabled"
-        : ""
-    }>Next</button>
-            </div>
+            ${paginationControls}
             <div class="album-card-actions">
               <button class='btn btn-sm btn-warning edit-btn me-2' data-id='${
                 item.id

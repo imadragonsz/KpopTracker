@@ -127,8 +127,9 @@ async function loadAndRenderGroups() {
   // Try cache first
   let groups = getCachedData("groups");
   let fetchedGroups = null;
-  if (!groups) {
+  if (!Array.isArray(groups)) {
     groups = await fetchGroups();
+    if (!Array.isArray(groups)) groups = [];
     setCachedData("groups", groups);
     // groups is now up to date, continue to render below
   } else {

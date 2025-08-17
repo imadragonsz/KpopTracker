@@ -10,12 +10,12 @@
   box-shadow: 0 2px 12px 0 #00000022;
 }
 .modal {
-  padding-top: 145px !important;
+  padding-top: 40px !important;
   padding-bottom: 20px !important;
   overflow-y: auto;
 }
 .modal-dialog {
-  margin: 145px auto 10px auto !important;
+  margin: 40px auto 10px auto !important;
   max-width: min(98vw, 500px);
   width: 100%;
   max-height: calc(100vh - 155px);
@@ -45,13 +45,13 @@
 }
 @media (max-width: 991.98px) {
   .modal-dialog {
-    margin: 145px auto 3px auto !important;
+    margin: 40px auto 3px auto !important;
     max-width: 99vw;
   }
 }
 @media (max-width: 575.98px) {
   .modal-dialog {
-    margin: 145px auto 2px auto !important;
+    margin: 24px auto 2px auto !important;
     max-width: 100vw;
   }
   .modal-content {

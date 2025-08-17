@@ -1,3 +1,19 @@
+/* Ensure card text is visible on dark backgrounds for profile page */
+.card.bg-dark,
+.card.bg-dark .card-body,
+.card.bg-dark * {
+  color: #eaeaea !important;
+}
+
+/* General card background and border for theme consistency */
+.card,
+.card.bg-dark,
+.card-body {
+  background: #232946 !important;
+  border-color: #43c6ac !important;
+  --bs-card-bg: #232946 !important;
+  color: #eaeaea !important;
+}
 /* Global, Utility, and Base Styles */
 html {
   box-sizing: border-box;
@@ -21,6 +37,119 @@ body {
 /* Utility */
 .shadow-lg {
   box-shadow: none !important;
+}
+
+/* --- Custom Classes for Kpop Album Tracker Pages --- */
+.profile-bg {
+  background: #181a20 !important;
+  min-height: 100vh;
+}
+
+.main-container {
+  background: #232946 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 2px 16px 0 #232a3633;
+  max-width: 900px;
+  width: 100%;
+  margin-top: 90px;
+}
+
+.group-count-badge {
+  background: #232a36;
+  color: #43c6ac;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.25em 0.9em;
+  font-size: 1.05em;
+  border: 1.5px solid #43c6ac;
+  display: inline-block;
+}
+
+.add-group-btn-mb {
+  margin-bottom: 0.5rem !important;
+}
+
+.hero-section {
+  background: linear-gradient(180deg, #232946 60%, #181a20 100%);
+  padding-top: 3rem !important;
+  padding-bottom: 2rem !important;
+  border-radius: 0 0 18px 18px;
+  box-shadow: 0 2px 16px 0 #232a3633;
+  margin-top: 80px !important; /* Add space below navbar */
+}
+@media (max-width: 576px) {
+  .hero-section {
+    margin-top: 64px !important;
+  }
+}
+.hero-heading-text {
+  color: #67e8f9 !important;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px #232a3640;
+}
+.hero-lead-text {
+  color: #bfc9db !important;
+  font-size: 1.15rem;
+  font-weight: 400;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 1px 4px #232a3620;
+}
+
+/* Group List Styling to Match Album Card Look */
+#groupList.list-group {
+  background: #232a36 !important;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px 0 #232a3633;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  border: 1.5px solid #43c6ac;
+}
+#groupList .list-group-item {
+  background: #232946 !important;
+  color: #eaeaea !important;
+  border: 1.5px solid #35343a !important;
+  border-radius: 12px !important;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 1px 6px 0 #232a3620;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+#groupList .list-group-item:hover {
+  border: 1.5px solid #43c6ac !important;
+  box-shadow: 0 2px 12px 0 #43c6ac33;
+  background: #232a36 !important;
+}
+#groupList .img-thumbnail {
+  background: #181a20 !important;
+  border: 1.5px solid #43c6ac !important;
+  border-radius: 10px !important;
+  max-width: 60px;
+  max-height: 60px;
+  margin-right: 1rem;
+}
+#groupList .edit-group-btn {
+  background: #a06c85 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+}
+#groupList .edit-group-btn:hover {
+  background: #43c6ac !important;
+  color: #181a20 !important;
+}
+
+/* Ensure spacing below navbar for text-center elements (index.html hero) */
+.py-5.text-center,
+.text-center.py-5 {
+  margin-top: 75px !important;
+}
+@media (max-width: 576px) {
+  .py-5.text-center,
+  .text-center.py-5 {
+    margin-top: 72px !important;
+  }
 }
 
 /* Responsive Tweaks */
@@ -80,4 +209,39 @@ body {
   .lead {
     font-size: 1rem !important;
   }
+}
+
+#userEmail {
+  margin-left: 0.25rem !important;
+  margin-right: 0.5rem !important;
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  background: #232946;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #43c6ac 0%, #232a36 100%);
+  border-radius: 8px;
+  border: 2px solid #181a20;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #67e8f9 0%, #43c6ac 100%);
+}
+::-webkit-scrollbar-track {
+  background: #181a20;
+  border-radius: 8px;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #43c6ac #181a20;
+}
+
+/* Always hide profileNavLink and navbar-profile-btn when d-none is present */
+#profileNavLink.d-none,
+.navbar-profile-btn.d-none {
+  display: none !important;
 }

@@ -11,7 +11,8 @@ const navbarRight = document.createElement("div");
 navbarRight.className = "d-flex ms-auto align-items-center";
 navbarRight.innerHTML = `
   <button id="loginBtn" class="btn btn-outline-info btn-sm me-2">Login</button>
-  <button id="logoutBtn" class="btn btn-outline-secondary btn-sm d-none">Logout</button>
+  <a id="profileNavLink" class="btn btn-info ms-2 fw-bold navbar-profile-btn d-none" href="/pages/profile.html" style="display:none;">My Profile</a>
+  <button id="logoutBtn" class="btn btn-outline-secondary btn-sm d-none ms-2">Logout</button>
   <span id="userEmail" class="text-light small ms-2 d-none"></span>
 `;
 
@@ -23,26 +24,11 @@ function insertAuthButtons() {
   }
   if (nav && !document.getElementById("loginBtn")) {
     nav.appendChild(navbarRight);
-    // Move My Profile link to the right of the logout button (not in nav list)
-    let profileNavLink = document.getElementById("profileNavLink");
-    if (!profileNavLink) {
-      profileNavLink = document.createElement("a");
-      profileNavLink.className = "btn btn-info ms-2 fw-bold navbar-profile-btn";
-      profileNavLink.id = "profileNavLink";
-      profileNavLink.href = "/pages/profile.html";
-      profileNavLink.textContent = "My Profile";
-    } else {
-      // Ensure the class is present if the element already exists
-      if (!profileNavLink.classList.contains("navbar-profile-btn")) {
-        profileNavLink.classList.add("navbar-profile-btn");
-      }
-    }
-    // Always add the profile button
+    // Remove the old profileNavContainer if present
     const profileNavContainer = document.getElementById("profileNavContainer");
-    if (profileNavContainer && !profileNavContainer.contains(profileNavLink)) {
-      profileNavContainer.appendChild(profileNavLink);
+    if (profileNavContainer) {
+      profileNavContainer.remove();
     }
-    profileNavLink.style.display = "";
     // Attach login button event listener immediately after insertion
     const loginBtn = document.getElementById("loginBtn");
     if (loginBtn) {
@@ -98,6 +84,12 @@ function hideLoginModal() {
 import { supabase } from "./api/supabaseClient.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Hide My Profile button immediately on load
+  const profileNavLink = document.getElementById("profileNavLink");
+  if (profileNavLink) {
+    profileNavLink.classList.add("d-none");
+    profileNavLink.style.display = "none";
+  }
   // Ensure auth buttons are injected before updating UI
   ensureAuthButtonsInjected();
 
@@ -262,6 +254,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const userEmail = document.getElementById("userEmail");
+    const profileNavLink = document.getElementById("profileNavLink");
     // Only call supabase.auth.getUser if a session exists
     const { data: sessionData, error: sessionError } =
       await supabase.auth.getSession();
@@ -271,31 +264,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         await supabase.auth.getUser();
       user = userData && userData.user ? userData.user : null;
     }
-    // Show/hide and move My Profile link based on login state
-    let profileNavLink = document.getElementById("profileNavLink");
-    const profileNavContainer = document.getElementById("profileNavContainer");
-    if (profileNavContainer) {
-      if (!profileNavLink) {
-        profileNavLink = document.createElement("a");
-        profileNavLink.className = "btn btn-info ms-2 fw-bold";
-        profileNavLink.id = "profileNavLink";
-        profileNavLink.href = "/pages/profile.html";
-        profileNavLink.textContent = "My Profile";
-      }
-      profileNavLink.style.display = "";
-      if (!profileNavLink.parentElement) {
-        profileNavContainer.appendChild(profileNavLink);
-      }
+    // Show/hide My Profile link based on login state
+    if (profileNavLink) {
       if (user) {
-        profileNavLink.classList.remove("disabled");
-        profileNavLink.removeAttribute("tabindex");
-        profileNavLink.removeAttribute("aria-disabled");
-        profileNavLink.title = "";
+        profileNavLink.classList.remove("d-none");
+        profileNavLink.style.display = "";
       } else {
-        profileNavLink.classList.add("disabled");
-        profileNavLink.setAttribute("tabindex", "-1");
-        profileNavLink.setAttribute("aria-disabled", "true");
-        profileNavLink.title = "Log in to view your profile";
+        profileNavLink.classList.add("d-none");
+        profileNavLink.style.display = "none";
       }
     }
     // (Debug logs removed)
