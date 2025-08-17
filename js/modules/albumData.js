@@ -30,17 +30,26 @@ export function sortAlbums(albums, sortBy) {
     if (sortBy === "year") {
       return parseInt(a.year) - parseInt(b.year);
     }
-    return a[sortBy].localeCompare(b[sortBy]);
+    const aVal = a[sortBy] != null ? String(a[sortBy]) : "";
+    const bVal = b[sortBy] != null ? String(b[sortBy]) : "";
+    return aVal.localeCompare(bVal);
   });
 }
 
-export function getTotalAlbumCount(albums) {
-  return albums.reduce((total, album) => {
-    if (Array.isArray(album.versions) && album.versions.length > 0) {
-      return total + album.versions.length;
+import { fetchUserAlbumVersions } from "../api/userAlbumVersionsApi.js";
+
+export async function getTotalAlbumCount(albums) {
+  let total = 0;
+  for (const album of albums) {
+    // eslint-disable-next-line no-await-in-loop
+    const userVersions = await fetchUserAlbumVersions(album.id);
+    if (Array.isArray(userVersions) && userVersions.length > 0) {
+      total += userVersions.length;
+    } else {
+      total += 1;
     }
-    return total + 1;
-  }, 0);
+  }
+  return total;
 }
 
 // Add more data-related functions as needed

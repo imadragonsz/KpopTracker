@@ -1,0 +1,13 @@
+@media (min-width: 768px) {
+  .col-md-3 {
+    flex: 0 0 auto;
+    width: fit-content !important;
+    max-width: 220px;
+  }
+  #filterGroup.form-select {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 220px;
+    display: inline-block;
+  }
+}

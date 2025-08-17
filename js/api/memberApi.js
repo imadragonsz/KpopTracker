@@ -1,15 +1,65 @@
-import { supabase } from "./supabaseClient.js";
+import { supabasePromise } from "./supabaseClient.js";
 import { getCurrentUser } from "../auth.js";
 
 export async function fetchMembersByGroup(groupId) {
   const user = await getCurrentUser();
   if (!user) return [];
+  const cacheKey = `members_${groupId}_${user.id}`;
+  const cacheTTL = 5 * 60 * 1000; // 5 minutes
+  let cached = null;
+  try {
+    const raw = localStorage.getItem(cacheKey);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed._ts && Date.now() - parsed._ts < cacheTTL) {
+        cached = parsed.data;
+      }
+    }
+  } catch {}
+  if (cached) {
+    // Fetch in background to update cache
+    fetchMembersByGroup._backgroundRefresh =
+      fetchMembersByGroup._backgroundRefresh || {};
+    if (!fetchMembersByGroup._backgroundRefresh[groupId]) {
+      fetchMembersByGroup._backgroundRefresh[groupId] = true;
+      fetchMembersByGroup._refreshPromise = (async () => {
+        const supabase = await supabasePromise;
+        const { data, error } = await supabase
+          .from("members")
+          .select("id, group_id, name, info, image, birthday, height, user_id")
+          .eq("group_id", groupId);
+        if (!error && data) {
+          const filtered = (data || []).filter(
+            (m) => Array.isArray(m.user_id) && m.user_id.includes(user.id)
+          );
+          localStorage.setItem(
+            cacheKey,
+            JSON.stringify({ _ts: Date.now(), data: filtered })
+          );
+        }
+        fetchMembersByGroup._backgroundRefresh[groupId] = false;
+      })();
+    }
+    return cached;
+  }
+  // No cache, fetch from backend
+  const supabase = await supabasePromise;
   const { data, error } = await supabase
     .from("members")
-    .select("id, group_id, name, info, image, birthday, height")
-    .eq("group_id", groupId)
-    .eq("user_id", user.id);
-  return data || [];
+    .select("id, group_id, name, info, image, birthday, height, user_id")
+    .eq("group_id", groupId);
+  if (error) {
+    console.error("[fetchMembersByGroup] Error:", error);
+    return [];
+  }
+  const filtered = (data || []).filter(
+    (m) => Array.isArray(m.user_id) && m.user_id.includes(user.id)
+  );
+  localStorage.setItem(
+    cacheKey,
+    JSON.stringify({ _ts: Date.now(), data: filtered })
+  );
+  return filtered;
 }
 
 export async function addMember(groupId, name, info, image, birthday, height) {
@@ -24,8 +74,9 @@ export async function addMember(groupId, name, info, image, birthday, height) {
     image,
     birthday: birthday ? birthday : null,
     height: height ? height : null,
-    user_id: user.id,
+    user_id: [user.id],
   };
+  const supabase = await supabasePromise;
   const { error } = await supabase.from("members").insert([memberData]);
   if (error) console.error("Add member error:", error);
 }
@@ -33,15 +84,48 @@ export async function addMember(groupId, name, info, image, birthday, height) {
 export async function updateMember(id, name, info, image, birthday, height) {
   const user = await getCurrentUser();
   if (!user) return;
+  const supabase = await supabasePromise;
+  // Fetch member by id
+  const { data: members, error } = await supabase
+    .from("members")
+    .select("user_id")
+    .eq("id", id);
+  if (error || !members || !members.length) {
+    console.error("[updateMember] Error fetching member:", error);
+    return;
+  }
+  const userIds = members[0].user_id || [];
+  if (!userIds.includes(user.id)) {
+    console.warn(
+      "[updateMember] User does not have permission to update this member"
+    );
+    return;
+  }
   await supabase
     .from("members")
     .update({ name, info, image, birthday, height })
-    .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("id", id);
 }
 
 export async function deleteMember(id) {
   const user = await getCurrentUser();
   if (!user) return;
-  await supabase.from("members").delete().eq("id", id).eq("user_id", user.id);
+  const supabase = await supabasePromise;
+  // Fetch member by id
+  const { data: members, error } = await supabase
+    .from("members")
+    .select("user_id")
+    .eq("id", id);
+  if (error || !members || !members.length) {
+    console.error("[deleteMember] Error fetching member:", error);
+    return;
+  }
+  const userIds = members[0].user_id || [];
+  if (!userIds.includes(user.id)) {
+    console.warn(
+      "[deleteMember] User does not have permission to delete this member"
+    );
+    return;
+  }
+  await supabase.from("members").delete().eq("id", id);
 }

@@ -27,11 +27,13 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="../styles/global.css" />
-    <link rel="stylesheet" href="../styles/navbar.css" />
-    <link rel="stylesheet" href="../styles/album-cards.css" />
-    <link rel="stylesheet" href="../styles/modals.css" />
-    <link rel="stylesheet" href="../styles/forms.css" />
+  <link rel="stylesheet" href="../styles/global.css" />
+  <link rel="stylesheet" href="../styles/navbar.css" />
+  <link rel="stylesheet" href="../styles/album-cards.css" />
+  <link rel="stylesheet" href="../styles/modals.css" />
+  <link rel="stylesheet" href="../styles/forms.css" />
+  <link rel="stylesheet" href="../styles/loading.css" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </head>
   <body class="profile-bg">
     <div id="navbar-include"></div>
@@ -59,11 +61,11 @@
                 "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js";
               supabaseScript.onload = () => {
                 const scripts = [
+                  "../js/components/loading.js",
                   "../js/authUI.js",
                   "../js/api/supabaseClient.js",
                   "../js/api/groupApi.js",
-                  "../js/api/albumApi.js",
-                  "../js/pages/groupManagementPage.js",
+                  "../js/api/albumApi.js"
                 ];
                 scripts.forEach((src) => {
                   const s = document.createElement("script");
@@ -110,6 +112,7 @@
           class="mb-3 mt-2 shadow-none"
         />
         <h1 class="fw-bold mb-2 hero-heading-text text-center">
+  <script type="module" src="../js/pages/groupsPage.js"></script>
           Group & Member Management
         </h1>
         <p class="lead mb-3 hero-lead-text text-center">
@@ -169,12 +172,21 @@
                   />
                 </div>
                 <div class="col-12 col-md-4">
-                  <input
-                    type="url"
-                    id="groupImage"
-                    class="form-control"
-                    placeholder="Group Image URL (optional)"
-                  />
+                  <!-- Removed groupImageFile input, now handled by modal gallery -->
+                  <div class="mb-2">
+                    <button
+                      type="button"
+                      class="btn btn-outline-info btn-sm"
+                      id="showGroupImageModal"
+                    >
+                      Choose Existing Image
+                    </button>
+                  </div>
+                  <input type="hidden" id="groupImage" />
+                  <div
+                    id="groupImageUploadStatus"
+                    class="form-text text-info"
+                  ></div>
                 </div>
                 <div class="col-12">
                   <textarea
@@ -256,7 +268,66 @@
                 <label for="editGroupImage" class="form-label"
                   >Group Image URL</label
                 >
-                <input type="url" class="form-control" id="editGroupImage" />
+                <!-- Removed editGroupImageFile input, now handled by modal gallery -->
+                <div class="mb-2">
+                  <button
+                    type="button"
+                    class="btn btn-outline-info btn-sm"
+                    id="showEditGroupImageModal"
+                  >
+                    Choose Existing Image
+                  </button>
+                </div>
+                <input type="hidden" id="editGroupImage" />
+                <div
+                  id="editGroupImageUploadStatus"
+                  class="form-text text-info"
+                ></div>
+                <script type="module">
+                  import { showGalleryModal } from '../js/components/galleryModal.js';
+                  document.addEventListener("DOMContentLoaded", function () {
+                    const groupBtn = document.getElementById("showGroupImageModal");
+                    const groupInput = document.getElementById("groupImage");
+                    const groupNameInput = document.getElementById("groupName");
+                    if (groupBtn && groupInput) {
+                      groupBtn.onclick = null;
+                      groupBtn.onclick = function () {
+                        showGalleryModal({
+                          onSelect: async (url) => {
+                            groupInput.value = url;
+                            if (window.editingGroupId) {
+                              const name = document.getElementById('editGroupName').value.trim();
+                              const notes = document.getElementById('editGroupNotes').value.trim();
+                              await window.updateGroup(window.editingGroupId, name, url, notes);
+                            }
+                          },
+                          title: "Select or Upload Group Image",
+                          groupName: groupNameInput && groupNameInput.value ? groupNameInput.value : null
+                        });
+                      };
+                    }
+                    const editBtn = document.getElementById("showEditGroupImageModal");
+                    const editInput = document.getElementById("editGroupImage");
+                    const editGroupNameInput = document.getElementById("editGroupName");
+                    if (editBtn && editInput) {
+                      editBtn.onclick = null;
+                      editBtn.onclick = function () {
+                        showGalleryModal({
+                          onSelect: async (url) => {
+                            editInput.value = url;
+                            if (window.editingGroupId) {
+                              const name = document.getElementById('editGroupName').value.trim();
+                              const notes = document.getElementById('editGroupNotes').value.trim();
+                              await window.updateGroup(window.editingGroupId, name, url, notes);
+                            }
+                          },
+                          title: "Select or Upload Group Image",
+                          groupName: editGroupNameInput && editGroupNameInput.value ? editGroupNameInput.value : null
+                        });
+                      };
+                    }
+                  });
+                </script>
               </div>
               <div class="mb-3">
                 <label for="editGroupNotes" class="form-label"
@@ -331,17 +402,17 @@
                 required
               />
               <input
-                type="date"
-                class="form-control mb-2"
-                id="memberBirthday"
-                placeholder="Birthday (optional)"
-              />
-              <input
-                type="number"
-                class="form-control mb-2"
-                id="memberHeight"
-                placeholder="Height (cm, optional)"
-                min="0"
+                    type="file"
+                    id="groupImageFile"
+                    class="form-control mb-1"
+                    accept="image/*"
+                    style="display:none;"
+                  />
+                  <div class="mb-2">
+                    <button type="button" class="btn btn-outline-info btn-sm" id="openGroupGalleryModal">Choose or Upload Image</button>
+                  </div>
+                  <input type="hidden" id="groupImage" />
+                  <div id="groupImageUploadStatus" class="form-text text-info"></div>
               />
               <input
                 type="text"
@@ -350,17 +421,17 @@
                 placeholder="Info (optional)"
               />
               <input
-                type="url"
-                class="form-control mb-2"
-                id="memberImage"
-                placeholder="Image URL (optional)"
-              />
-              <button type="submit" class="btn btn-info">Add Member</button>
-            </form>
-            <ul id="membersList" class="list-group"></ul>
-          </div>
-        </div>
-      </div>
+                  type="file"
+                  class="form-control mb-1"
+                  id="editGroupImageFile"
+                  accept="image/*"
+                  style="display:none;"
+                />
+                <div class="mb-2">
+                  <button type="button" class="btn btn-outline-info btn-sm" id="openEditGroupGalleryModal">Choose or Upload Image</button>
+                </div>
+                <input type="hidden" id="editGroupImage" />
+                <div id="editGroupImageUploadStatus" class="form-text text-info"></div>
     </div>
 
     <div
@@ -397,21 +468,22 @@
           <div class="modal-header">
             <h5 class="modal-title" id="albumInfoModalLabel">Album Info</h5>
             <button
-              type="button"
-              class="btn-close btn-close-white"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body" id="albumInfoBody"></div>
-        </div>
-      </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="../js/authUI.js"></script>
-    <script type="module" src="../js/api/supabaseClient.js" defer></script>
-    <script type="module" src="../js/api/groupApi.js" defer></script>
-    <script type="module" src="../js/pages/groupsPage.js" defer></script>
-  </body>
-</html>
+              <script type="module">
+              import { showGalleryModal } from '../js/components/galleryModal.js';
+              document.getElementById('openGroupGalleryModal').onclick = function() {
+                showGalleryModal({
+                  onSelect: url => {
+                    document.getElementById('groupImage').value = url;
+                  },
+                  title: 'Select or Upload Group Image'
+                });
+              };
+              document.getElementById('openEditGroupGalleryModal').onclick = function() {
+                showGalleryModal({
+                  onSelect: url => {
+                    document.getElementById('editGroupImage').value = url;
+                  },
+                  title: 'Select or Upload Group Image'
+                });
+              };
+              </script>

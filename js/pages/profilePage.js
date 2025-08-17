@@ -1,4 +1,5 @@
 import { setupExportImport } from "../exportImport.js";
+import { showLoading, hideLoading } from "../components/loading.js";
 // Change Password Logic (require old password)
 const changePasswordForm = document.getElementById("changePasswordForm");
 if (changePasswordForm) {
@@ -100,11 +101,14 @@ function isDataStale(ts, maxAgeMs = 5 * 60 * 1000) {
 }
 
 // profilePage.js - Handles loading and displaying user profile info
-import { supabase } from "../api/supabaseClient.js";
+import { supabasePromise } from "../api/supabaseClient.js";
 import { fetchAlbums } from "../api/albumApi.js";
 import { fetchGroups } from "../api/groupApi.js";
+import { fetchUserAlbumVersions } from "../api/userAlbumVersionsApi.js";
 
 async function loadProfile() {
+  showLoading();
+  const supabase = await supabasePromise;
   const debugStart = performance.now();
   // DOM lookups
   const userEmailDiv = document.getElementById("user-email");
@@ -273,28 +277,19 @@ async function loadProfile() {
     }
   }
 
-  // --- Most Collected Group ---
-  // Count versions per group
+  // --- Most Collected Group (per-user versions) ---
   const groupVersionCounts = {};
   for (const album of albums) {
     const groupName =
       album.group || album.group_name || album.groupName || "Unknown Group";
-    // Parse versions if needed
-    let versions = album.versions;
-    if (typeof versions === "string") {
-      try {
-        versions = JSON.parse(versions);
-      } catch {
-        versions = [];
-      }
-    }
+    // Fetch per-user versions for this album
+    // eslint-disable-next-line no-await-in-loop
+    let versions = await fetchUserAlbumVersions(album.id);
     if (!Array.isArray(versions)) versions = [];
-    // Count versions (or 1 if no versions)
     const count = versions.length > 0 ? versions.length : 1;
     groupVersionCounts[groupName] =
       (groupVersionCounts[groupName] || 0) + count;
   }
-  // Find the group with the max count
   let mostCollectedGroup = "-";
   let mostCollectedCount = 0;
   for (const [group, count] of Object.entries(groupVersionCounts)) {
@@ -475,9 +470,7 @@ async function loadProfile() {
     localStorage.setItem("user-email", user.email || "-");
   }
 
-  // Fetch album and group counts (if available via API)
-  // Set album and group counts from fetched arrays
-  // Count each album version as one; if no versions, count as 1
+  // Fetch album and group counts (per-user versions)
   let albumCount = 0;
   let versionCount = 0;
   let onTheWayCount = 0;
@@ -485,21 +478,14 @@ async function loadProfile() {
   try {
     if (Array.isArray(albums)) {
       for (const album of albums) {
-        // Parse versions if it's a string
-        let versions = album.versions;
-        if (typeof versions === "string") {
-          try {
-            versions = JSON.parse(versions);
-          } catch {
-            versions = [];
-          }
-        }
+        // Fetch per-user versions for this album
+        // eslint-disable-next-line no-await-in-loop
+        let versions = await fetchUserAlbumVersions(album.id);
         if (!Array.isArray(versions)) versions = [];
         albumCount++;
         versionCount += versions.length > 0 ? versions.length : 1;
         if (versions.length > 0) {
           const filtered = versions.filter((v) => {
-            // Skipping non-object version entry
             return v.onTheWay === true || v.onTheWay === "true";
           });
           onTheWayCount += filtered.length;
@@ -525,6 +511,7 @@ async function loadProfile() {
     }
   }
   const debugEnd = performance.now();
+  hideLoading();
 }
 // Export for use in authUI.js
 export { loadProfile };

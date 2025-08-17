@@ -59,9 +59,10 @@ function hideLoginModal() {
 }
 // All login logic is handled inside the event handler below where email is defined.
 
-import { supabase } from "./api/supabaseClient.js";
+import { supabasePromise } from "./api/supabaseClient.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
+  const supabase = await supabasePromise;
   // Hide My Profile button immediately on load
   const profileNavLink = document.getElementById("profileNavLink");
   if (profileNavLink) {
@@ -204,10 +205,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     registerBtn.addEventListener("click", async () => {
       const email = document.getElementById("authEmail").value.trim();
       const password = document.getElementById("authPassword").value;
-      console.log("Register attempt:", {
-        email,
-        passwordLength: password ? password.length : 0,
-      });
       if (!email || !password) {
         document.getElementById("authError").textContent =
           "Email and password are required.";
@@ -242,6 +239,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await supabase.auth.getUser();
       user = userData && userData.user ? userData.user : null;
     }
+    console.debug("[updateAuthUI] sessionData:", sessionData, "user:", user);
     // Show/hide My Profile link based on login state
     if (profileNavLink) {
       if (user) {
@@ -252,7 +250,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         profileNavLink.style.display = "none";
       }
     }
-    // (Debug logs removed)
     const path = window.location.pathname;
     let container = null;
     if (path.includes("albumCollection")) {

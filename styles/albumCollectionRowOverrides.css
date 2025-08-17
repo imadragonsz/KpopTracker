@@ -1,0 +1,8 @@
+.album-filter-row .album-count-align {
+  align-self: center !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 40px !important;
+  min-width: 90px;
+  justify-content: center;
+}

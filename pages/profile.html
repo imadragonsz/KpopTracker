@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../styles/album-cards.css" />
   <link rel="stylesheet" href="../styles/modals.css" />
   <link rel="stylesheet" href="../styles/forms.css" />
+  <link rel="stylesheet" href="../styles/loading.css" />
   <body class="profile-bg" style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: linear-gradient(180deg, #232946 10%, #181a20 20%); color: #eaeaea; margin: 0; min-height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
     
     <div id="navbar-include"></div>
@@ -39,6 +40,7 @@
               supabaseScript.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js';
               supabaseScript.onload = () => {
                 const scripts = [
+                  '../js/components/loading.js',
                   '../js/authUI.js',
                   '../js/api/supabaseClient.js',
                   '../js/api/groupApi.js',

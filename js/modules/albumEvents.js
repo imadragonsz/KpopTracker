@@ -1,9 +1,58 @@
+// Handle edit album image file upload
+document.addEventListener("change", async function (e) {
+  if (e.target && e.target.id === "editImageFile") {
+    const fileInput = e.target;
+    const status = document.getElementById("editImageUploadStatus");
+    const hiddenInput = document.getElementById("editImage");
+    if (!fileInput.files || !fileInput.files[0]) return;
+    const formData = new FormData();
+    formData.append("image", fileInput.files[0]);
+    status.textContent = "Uploading...";
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      hiddenInput.value = data.url;
+      status.textContent = "Upload successful!";
+    } catch (err) {
+      status.textContent = "Upload failed. Please try again.";
+      hiddenInput.value = "";
+    }
+  }
+});
+// Handle album image file upload
+document.addEventListener("change", async function (e) {
+  if (e.target && e.target.id === "albumImageFile") {
+    const fileInput = e.target;
+    const status = document.getElementById("albumImageUploadStatus");
+    const hiddenInput = document.getElementById("albumImage");
+    if (!fileInput.files || !fileInput.files[0]) return;
+    const formData = new FormData();
+    formData.append("image", fileInput.files[0]);
+    status.textContent = "Uploading...";
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      hiddenInput.value = data.url;
+      status.textContent = "Upload successful!";
+    } catch (err) {
+      status.textContent = "Upload failed. Please try again.";
+      hiddenInput.value = "";
+    }
+  }
+});
 // Always open the edit versions modal using Bootstrap's JS API
 document.addEventListener("click", function (e) {
   const btn = e.target.closest('[data-bs-target="#editVersionsModal"]');
   if (btn) {
     const modalElem = document.getElementById("editVersionsModal");
-    console.log("[DEBUG] Edit Versions button clicked.");
     if (modalElem && window.bootstrap && window.bootstrap.Modal) {
       const modal = window.bootstrap.Modal.getOrCreateInstance(modalElem);
       modal.show();
@@ -80,15 +129,18 @@ document.addEventListener("click", function (e) {
 document.addEventListener("click", async function (e) {
   const removeBtn = e.target.closest(".remove-btn");
   if (removeBtn) {
+    console.log("[DEBUG] Remove button clicked", removeBtn);
     const albumId = removeBtn.getAttribute("data-id");
     if (!albumId) return;
     if (!confirm("Are you sure you want to remove this album?")) return;
     try {
       const { deleteAlbum } = await import("../api/albumApi.js");
+      console.log("[DEBUG] Calling deleteAlbum for id", albumId);
       await deleteAlbum(albumId);
       const { loadAndRenderAlbums } = await import("./albumLoader.js");
       loadAndRenderAlbums();
     } catch (err) {
+      console.error("[DEBUG] Failed to remove album", err);
       alert("Failed to remove album.");
     }
   }
@@ -100,7 +152,7 @@ document.addEventListener("submit", async function (e) {
     const groupSelect = document.getElementById("groupSelect");
     const albumInput = document.getElementById("album");
     const yearSelect = document.getElementById("year");
-    const albumImage = document.getElementById("albumImage");
+    const albumImage = document.getElementById("albumImage"); // now hidden input set by upload
     const onTheWay = document.getElementById("onTheWay");
     const albumVersionsList = document.getElementById("albumVersionsList");
     // Get versions from persistent array
@@ -194,11 +246,16 @@ export function setupAlbumEventHandlers() {
       // Show versions in modal and store in persistent array for this session
       const editVersionsList = document.getElementById("editVersionsList");
       if (editVersionsList) {
-        // Store a persistent array on the modal element for this edit session
-        editVersionsList._versionsArr = Array.isArray(album.versions)
-          ? [...album.versions]
-          : [];
-        renderVersionList(editVersionsList, editVersionsList._versionsArr);
+        // Fetch per-user versions for this album
+        import("../api/userAlbumVersionsApi.js").then(
+          async ({ fetchUserAlbumVersions }) => {
+            const userVersions = await fetchUserAlbumVersions(album.id);
+            editVersionsList._versionsArr = Array.isArray(userVersions)
+              ? [...userVersions]
+              : [];
+            renderVersionList(editVersionsList, editVersionsList._versionsArr);
+          }
+        );
       }
       // Show modal
       const modalElem = document.getElementById("editAlbumModal");

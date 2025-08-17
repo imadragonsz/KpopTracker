@@ -1,3 +1,53 @@
+// Handle edit group image file upload
+document.addEventListener("change", async function (e) {
+  if (e.target && e.target.id === "editGroupImageFile") {
+    const fileInput = e.target;
+    const status = document.getElementById("editGroupImageUploadStatus");
+    const hiddenInput = document.getElementById("editGroupImage");
+    if (!fileInput.files || !fileInput.files[0]) return;
+    const formData = new FormData();
+    formData.append("image", fileInput.files[0]);
+    status.textContent = "Uploading...";
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      hiddenInput.value = data.url;
+      status.textContent = "Upload successful!";
+    } catch (err) {
+      status.textContent = "Upload failed. Please try again.";
+      hiddenInput.value = "";
+    }
+  }
+});
+// Handle group image file upload
+document.addEventListener("change", async function (e) {
+  if (e.target && e.target.id === "groupImageFile") {
+    const fileInput = e.target;
+    const status = document.getElementById("groupImageUploadStatus");
+    const hiddenInput = document.getElementById("groupImage");
+    if (!fileInput.files || !fileInput.files[0]) return;
+    const formData = new FormData();
+    formData.append("image", fileInput.files[0]);
+    status.textContent = "Uploading...";
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      hiddenInput.value = data.url;
+      status.textContent = "Upload successful!";
+    } catch (err) {
+      status.textContent = "Upload failed. Please try again.";
+      hiddenInput.value = "";
+    }
+  }
+});
 // --- Caching Utilities ---
 function getCachedData(key) {
   try {
@@ -19,6 +69,7 @@ function isDataDifferent(a, b) {
   return JSON.stringify(a) !== JSON.stringify(b);
 }
 import { fetchGroups, addGroup, updateGroup } from "../api/groupApi.js";
+import { removeUserFromGroup } from "../api/groupApi.js";
 import { fetchAlbums } from "../api/albumApi.js";
 import {
   fetchMembersByGroup,
@@ -94,8 +145,8 @@ async function showMembersList() {
   });
 }
 const addGroupForm = document.getElementById("addGroupForm");
-const newGroupName = document.getElementById("newGroupName");
-const newGroupImage = document.getElementById("newGroupImage");
+const newGroupName = document.getElementById("groupName");
+const newGroupImage = document.getElementById("groupImage"); // now hidden input set by upload
 const groupNotes = document.getElementById("groupNotes");
 
 if (addGroupForm) {
@@ -104,6 +155,15 @@ if (addGroupForm) {
     const name = newGroupName.value.trim();
     const image = newGroupImage.value.trim();
     const notes = groupNotes.value.trim();
+    const imageStatus = document.getElementById("groupImageUploadStatus");
+    if (!image) {
+      imageStatus.textContent = "Please select or upload a group image.";
+      imageStatus.classList.add("text-danger");
+      return;
+    } else {
+      imageStatus.textContent = "";
+      imageStatus.classList.remove("text-danger");
+    }
     if (name) {
       await addGroup(name, image, notes);
       newGroupName.value = "";
@@ -179,8 +239,10 @@ async function loadAndRenderGroups() {
     if (group.image) {
       imageHtml = `<img src="${group.image}" alt="Group Image" class="img-thumbnail me-3" style="max-width:120px;max-height:120px;">`;
     }
+    // Add Remove button
     li.innerHTML = `${imageHtml}<span class="flex-grow-1 fs-5">${group.name}</span>
-      <button class="btn btn-sm btn-warning ms-auto edit-group-btn" data-id="${group.id}">Edit</button>`;
+      <button class="btn btn-sm btn-warning ms-auto edit-group-btn" data-id="${group.id}">Edit</button>
+      <button class="btn btn-sm btn-danger ms-2 remove-group-btn" data-id="${group.id}">Remove</button>`;
     li.setAttribute("data-id", group.id);
     // Edit button event
     li.querySelector(".edit-group-btn").addEventListener(
@@ -213,6 +275,21 @@ async function loadAndRenderGroups() {
         }
       }
     );
+    // Remove button event
+    li.querySelector(".remove-group-btn").addEventListener(
+      "click",
+      async function (e) {
+        e.stopPropagation();
+        if (
+          confirm(
+            "Are you sure you want to remove this group from your collection?"
+          )
+        ) {
+          await removeUserFromGroup(group.id);
+          loadAndRenderGroups();
+        }
+      }
+    );
     document.addEventListener("DOMContentLoaded", function () {
       const editGroupForm = document.getElementById("editGroupForm");
       if (editGroupForm) {
@@ -222,6 +299,17 @@ async function loadAndRenderGroups() {
           const name = editGroupName.value.trim();
           const image = editGroupImage.value.trim();
           const notes = editGroupNotes.value.trim();
+          const imageStatus = document.getElementById(
+            "editGroupImageUploadStatus"
+          );
+          if (!image) {
+            imageStatus.textContent = "Please select or upload a group image.";
+            imageStatus.classList.add("text-danger");
+            return;
+          } else {
+            imageStatus.textContent = "";
+            imageStatus.classList.remove("text-danger");
+          }
           updateGroup(editingGroupId, name, image, notes).then(() => {
             editGroupModal.hide();
             loadAndRenderGroups();
@@ -231,7 +319,11 @@ async function loadAndRenderGroups() {
     });
     // Group info event
     li.addEventListener("click", async function (e) {
-      if (e.target.classList.contains("edit-group-btn")) return;
+      if (
+        e.target.classList.contains("edit-group-btn") ||
+        e.target.classList.contains("remove-group-btn")
+      )
+        return;
       const groups = getCachedData("groups") || (await fetchGroups());
       const g = groups.find((gr) => gr.id == group.id);
       if (g) {
@@ -249,7 +341,11 @@ async function loadAndRenderGroups() {
         }
         Promise.all([
           fetchMembersByGroup(g.id),
-          Promise.resolve(albums.filter((a) => a.group === g.name)),
+          Promise.resolve(
+            (Array.isArray(albums) ? albums : []).filter(
+              (a) => a.group === g.name
+            )
+          ),
         ]).then(([members, albums]) => {
           showGroupInfoModal(g, members, albums, {
             onShow: () => groupInfoModal.show(),

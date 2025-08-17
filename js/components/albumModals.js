@@ -25,7 +25,13 @@ export function getTrackingUrl(trackingCode) {
     trackingCode + " tracking"
   )}`;
 }
-export function showAlbumInfoModal(album) {
+
+import {
+  fetchUserAlbumVersions,
+  upsertUserAlbumVersions,
+} from "../api/userAlbumVersionsApi.js";
+
+export async function showAlbumInfoModal(album) {
   const albumInfoBody = document.getElementById("albumInfoBody");
   let albumHtml = "";
   if (album.image) {
@@ -39,20 +45,19 @@ export function showAlbumInfoModal(album) {
   }</a></div>`;
   albumHtml += `<div class='text-center mb-2'><span class='fw-bold'>Year:</span> ${album.year}</div>`;
 
-  // Version pagination state (store on album object for session)
+  // Fetch per-user versions for this album
+  const userVersions = await fetchUserAlbumVersions(album.id);
   if (!album._infoVersionPage) album._infoVersionPage = 1;
   const VERSIONS_PER_PAGE = 4;
-  const totalVersions = Array.isArray(album.versions)
-    ? album.versions.length
-    : 0;
+  const totalVersions = Array.isArray(userVersions) ? userVersions.length : 0;
   const totalPages =
     totalVersions > 0 ? Math.ceil(totalVersions / VERSIONS_PER_PAGE) : 1;
   if (album._infoVersionPage > totalPages) album._infoVersionPage = 1;
   const page = album._infoVersionPage;
   const start = (page - 1) * VERSIONS_PER_PAGE;
   const end = start + VERSIONS_PER_PAGE;
-  const pageVersions = Array.isArray(album.versions)
-    ? album.versions.slice(start, end)
+  const pageVersions = Array.isArray(userVersions)
+    ? userVersions.slice(start, end)
     : [];
 
   if (totalVersions > 0) {
@@ -74,7 +79,6 @@ export function showAlbumInfoModal(album) {
               }
             }
             let trackingHtml = "";
-            // Tracking info is not shown in the album info modal
             if (typeof obj === "string") {
               return `<span class='badge bg-info text-dark fs-6 px-3 py-2'>${obj}</span>`;
             } else if (
@@ -108,10 +112,9 @@ export function showAlbumInfoModal(album) {
   }
   albumInfoBody.innerHTML = albumHtml;
 
-  // Add event listeners for version badge click (On the Way only)
+  // Add event listeners for version badge click (all versions)
   if (totalVersions > 0) {
     setTimeout(() => {
-      // Pagination buttons (existing code)
       const prevBtn = document.getElementById("albumInfoVersionsPrev");
       const nextBtn = document.getElementById("albumInfoVersionsNext");
       if (prevBtn) {
@@ -141,12 +144,9 @@ export function showAlbumInfoModal(album) {
           // Find version index in current page
           const versionIdx =
             (album._infoVersionPage - 1) * VERSIONS_PER_PAGE + idx;
-          if (
-            !Array.isArray(album.versions) ||
-            versionIdx >= album.versions.length
-          )
+          if (!Array.isArray(userVersions) || versionIdx >= userVersions.length)
             return;
-          let version = album.versions[versionIdx];
+          let version = userVersions[versionIdx];
           let obj = version;
           if (
             typeof version === "string" &&
@@ -170,8 +170,7 @@ export function showAlbumInfoModal(album) {
               onTheWay: obj.onTheWay || false,
               notes: obj.notes || "",
             },
-            (newData) => {
-              // newData: { name, trackingCode, onTheWay, notes }
+            async (newData) => {
               let updatedVersion = {};
               if (typeof obj === "object" && obj !== null) {
                 updatedVersion = {
@@ -191,61 +190,16 @@ export function showAlbumInfoModal(album) {
                   ...newData,
                 };
               }
-              album.versions[versionIdx] = updatedVersion;
-              // Debug logging
-              console.log(
-                "[albumVersionModal] Updated version:",
-                album.versions[versionIdx]
-              );
-              console.log(
-                "[albumVersionModal] Full album object before update:",
-                JSON.parse(JSON.stringify(album))
-              );
-              // Persist to database and reload albums
-              import("../api/albumApi.js").then(async ({ updateAlbum }) => {
-                // Remove UI-only properties before saving
-                const { _infoVersionPage, _versionPage, ...albumToSave } =
-                  album;
-                console.log("[albumVersionModal] Sending to updateAlbum:", {
-                  id: album.id,
-                  album: albumToSave,
-                });
-                const result = await updateAlbum(album.id, albumToSave);
-                console.log("[albumVersionModal] updateAlbum result:", result);
-                // Reload albums to reflect changes in UI
-                import("../modules/albumLoader.js").then(
-                  ({ loadAndRenderAlbums }) => {
-                    loadAndRenderAlbums();
-                  }
-                );
-              });
+              // Update the version in the user's versions array
+              userVersions[versionIdx] = updatedVersion;
+              // Persist to user_album_versions table
+              await upsertUserAlbumVersions(album.id, userVersions);
+              // Reload modal to reflect changes
+              showAlbumInfoModal(album);
             }
           );
         });
       });
-    }, 0);
-  }
-
-  // Add event listeners for pagination buttons
-  if (totalVersions > 0) {
-    setTimeout(() => {
-      const prevBtn = document.getElementById("albumInfoVersionsPrev");
-      const nextBtn = document.getElementById("albumInfoVersionsNext");
-      if (prevBtn) {
-        prevBtn.onclick = (e) => {
-          album._infoVersionPage = Math.max(1, album._infoVersionPage - 1);
-          showAlbumInfoModal(album);
-        };
-      }
-      if (nextBtn) {
-        nextBtn.onclick = (e) => {
-          album._infoVersionPage = Math.min(
-            totalPages,
-            album._infoVersionPage + 1
-          );
-          showAlbumInfoModal(album);
-        };
-      }
     }, 0);
   }
 }
