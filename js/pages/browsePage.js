@@ -17,7 +17,6 @@ if (!browseGroupCardsRow) {
   browseGroupCardsRow.id = "browseGroupCardsRow";
   browseResults.parentNode.insertBefore(browseGroupCardsRow, browseResults);
 }
-const browseGroupSelect = document.getElementById("browseGroupSelect");
 const browseSearchInput = document.getElementById("browseSearchInput");
 
 let allGroups = [];
@@ -28,9 +27,9 @@ let userAlbums = [];
 let userGroups = [];
 let selectedGroup = null;
 let currentPage = 1;
-const pageSize = 6; // Number of albums per page
+const pageSize = 5; // Number of albums per page
 let groupPage = 1;
-const groupPageSize = 6;
+const groupPageSize = 4;
 
 async function loadBrowseData() {
   showLoading();
@@ -41,7 +40,7 @@ async function loadBrowseData() {
   // Use fetchGroups from groupApi.js to get only the user's groups
   const { fetchGroups } = await import("../api/groupApi.js");
   userGroups = await fetchGroups();
-  renderGroupSelect();
+  // renderGroupSelect(); // Removed, handled by group cards row
   renderGroupCardsRow();
   renderResults();
   hideLoading();
@@ -62,11 +61,13 @@ function renderGroupCardsRow() {
   if (!allGroups.length) {
     browseGroupCardsRow.innerHTML =
       '<div class="text-center text-muted">No groups found.</div>';
+    console.warn("[Browse Debug] No groups found to display.");
     return;
   }
   // Horizontal scrollable row container
   const row = document.createElement("div");
-  row.className = "d-flex flex-row overflow-auto gap-3 mb-3";
+  row.className =
+    "d-flex flex-row overflow-auto gap-3 mb-3 justify-content-center";
   row.style.whiteSpace = "nowrap";
   row.style.scrollBehavior = "smooth";
 
@@ -173,21 +174,14 @@ function renderGroupCardsRow() {
   }, 0);
 }
 
-function renderGroupSelect() {
-  browseGroupSelect.innerHTML = '<option value="">All Groups</option>';
-  allGroups.forEach((g) => {
-    const opt = document.createElement("option");
-    opt.value = g.name;
-    opt.textContent = g.name;
-    browseGroupSelect.appendChild(opt);
-  });
-}
-
 function renderResults() {
   const search = browseSearchInput.value.trim().toLowerCase();
   const group = selectedGroup;
+  // Always start with all albums from the database
   filteredAlbums = allAlbums.filter((a) => {
+    // Only filter by group if a group is selected
     const matchesGroup = !group || a.group === group;
+    // Always allow search
     const matchesSearch =
       a.album.toLowerCase().includes(search) ||
       a.group.toLowerCase().includes(search);
@@ -204,12 +198,14 @@ function renderResults() {
   if (!filteredAlbums.length) {
     browseResults.innerHTML =
       '<div class="text-center text-muted">No albums found.</div>';
+    console.warn("[Browse Debug] No albums found to display.");
     return;
   }
 
   // Horizontal scrollable row container
   const row = document.createElement("div");
-  row.className = "d-flex flex-row overflow-auto gap-3 mb-3";
+  row.className =
+    "d-flex flex-row overflow-auto gap-3 mb-3 justify-content-center";
   row.style.whiteSpace = "nowrap";
   row.style.scrollBehavior = "smooth";
 
@@ -249,7 +245,6 @@ function renderResults() {
     `;
     // Open album info modal on card click, but not if Add to My Collection button is clicked
     cardWrapper.addEventListener("click", async (e) => {
-      console.log("[BrowsePage] Album card clicked:", album);
       if (e.target.closest(".add-to-collection-btn")) {
         console.log(
           "[BrowsePage] Clicked Add to My Collection button, not opening modal."
@@ -267,11 +262,9 @@ function renderResults() {
         showAlbumInfoModal(album);
         // Show the Bootstrap modal after content is set
         const modalEl = document.getElementById("albumInfoModal");
-        console.log("[BrowsePage] modalEl:", modalEl);
         if (modalEl && window.bootstrap && window.bootstrap.Modal) {
           const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
           modal.show();
-          console.log("[BrowsePage] Bootstrap modal shown.");
         } else {
           console.warn("[BrowsePage] Bootstrap modal not found or not loaded.");
         }
@@ -328,7 +321,9 @@ browseResults.addEventListener("click", async (e) => {
     const result = await addAlbumToUser(albumId);
     if (result.success) {
       btn.textContent = "Added!";
-      userAlbums = await fetchAlbums();
+      // Refresh all data to update UI and user collection
+      await loadBrowseData();
+      // Force re-render to update alert-success state
       renderResults();
     } else if (result.error && result.error.code === "23505") {
       btn.textContent = "Already in your collection";
@@ -351,10 +346,9 @@ browseGroupCardsRow.addEventListener("click", async (e) => {
     const result = await addGroupToUser(groupId);
     if (result.success) {
       btn.textContent = "Added!";
-      // Try to refresh userGroups if possible
-      if (typeof window.fetchGroups === "function") {
-        userGroups = await window.fetchGroups();
-      }
+      // Refresh all data to update UI and user collection
+      await loadBrowseData();
+      // Force re-render to update alert-success state
       renderGroupCardsRow();
     } else if (result.error && result.error.code === "23505") {
       btn.textContent = "Already in your collection";
@@ -369,10 +363,7 @@ browseGroupCardsRow.addEventListener("click", async (e) => {
 });
 // Reset page on filter/search change
 // Reset page on filter/search change
-browseGroupSelect.addEventListener("change", () => {
-  currentPage = 1;
-  renderResults();
-});
+// No longer need to listen for group select changes
 browseSearchInput.addEventListener("input", () => {
   currentPage = 1;
   renderResults();

@@ -139,6 +139,8 @@ document.addEventListener("click", async function (e) {
       await deleteAlbum(albumId);
       const { loadAndRenderAlbums } = await import("./albumLoader.js");
       loadAndRenderAlbums();
+      // Emit custom event for other pages
+      document.dispatchEvent(new CustomEvent("album-removed"));
     } catch (err) {
       console.error("[DEBUG] Failed to remove album", err);
       alert("Failed to remove album.");

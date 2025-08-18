@@ -286,6 +286,10 @@ async function loadAndRenderGroups() {
           )
         ) {
           await removeUserFromGroup(group.id);
+          // Remove local cache so next load is always fresh
+          try {
+            localStorage.removeItem("groups");
+          } catch {}
           loadAndRenderGroups();
         }
       }

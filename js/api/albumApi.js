@@ -110,6 +110,10 @@ export async function deleteAlbum(id) {
     console.error("[deleteAlbum] No user found");
     return;
   }
+  // Clear album cache for this user
+  try {
+    localStorage.removeItem(`albums_${user.id}`);
+  } catch {}
   const supabase = await supabasePromise;
   const { data: albums, error: fetchError } = await supabase
     .from("albums")

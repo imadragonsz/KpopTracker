@@ -5,7 +5,6 @@
       class="navbar-brand d-flex align-items-center gap-2"
       href="/index.html"
       style="margin-bottom: 0"
-    >
       <img
         src="https://cdn-icons-png.flaticon.com/512/727/727245.png"
         alt="Logo"
@@ -64,14 +63,37 @@
         <button id="logoutBtn" class="btn btn-outline-secondary btn-sm ms-2">
           Logout
         </button>
-        <span id="userEmail" class="text-light small ms-2"
-          >mittchelk@gmail.com</span
-        >
+  <span id="userEmail" class="text-light small ms-2"></span>
       </div>
     </div>
   </div>
 </nav>
 <script type="module">
+  // Dynamically set user email in navbar if available
+  (function setNavbarUserEmail() {
+    const userEmailSpan = document.getElementById("userEmail");
+    if (!userEmailSpan) return;
+    let email = localStorage.getItem("user-email");
+    function setOrHide(emailVal) {
+      if (emailVal && emailVal !== "-") {
+        userEmailSpan.textContent = emailVal;
+        userEmailSpan.style.display = "";
+      } else {
+        userEmailSpan.style.display = "none";
+      }
+    }
+    if ((!email || email === "-") && window.supabase) {
+      window.supabase.auth.getUser().then(({ data }) => {
+        if (data && data.user && data.user.email) {
+          setOrHide(data.user.email);
+        } else {
+          setOrHide("");
+        }
+      });
+    } else {
+      setOrHide(email);
+    }
+  })();
   // Highlight active nav link based on current page
   const navLinks = document.querySelectorAll(".nav-link[data-page]");
   navLinks.forEach((link) => {

@@ -1,6 +1,6 @@
 import { setupExportImport } from "../exportImport.js";
 import { showLoading, hideLoading } from "../components/loading.js";
-import { supabasePromise as supabase } from "../api/supabaseClient.js";
+import { supabasePromise } from "../api/supabaseClient.js";
 import { fetchAlbums } from "../api/albumApi.js";
 import { fetchGroups } from "../api/groupApi.js";
 
@@ -83,6 +83,10 @@ if (changePasswordForm) {
 }
 
 async function loadProfile() {
+  // Always use the resolved supabase client
+  const supabaseClient = await supabasePromise;
+  // check user login status (no debug log)
+  await supabaseClient.auth.getUser();
   showLoading();
 
   const userEmailDiv = document.getElementById("user-email");
@@ -112,34 +116,46 @@ async function loadProfile() {
   const cachedGroups = getCachedDataWithTimestamp("groups");
   let albums = (cachedAlbums && cachedAlbums.data) || [];
   let groups = (cachedGroups && cachedGroups.data) || [];
-  if (albumList && albums.length > 0) {
-    albumList.innerHTML = albums
-      .map((a) => {
-        const albumName = a.name || a.album || a.title || "(Untitled Album)";
-        const groupName =
-          a.group || a.group_name || a.groupName || "Unknown Group";
-        return `<li class="list-group-item bg-dark text-light border-info">${albumName} <span class="text-info small">(${groupName})</span></li>`;
-      })
-      .join("");
+  // ...
+  if (albumList) {
+    if (albums.length > 0) {
+      albumList.innerHTML = albums
+        .map((a) => {
+          const albumName = a.name || a.album || a.title || "(Untitled Album)";
+          const groupName =
+            a.group || a.group_name || a.groupName || "Unknown Group";
+          return `<li class="list-group-item bg-dark text-light border-info">${albumName} <span class="text-info small">(${groupName})</span></li>`;
+        })
+        .join("");
+    } else {
+      albumList.innerHTML =
+        '<li class="list-group-item bg-dark text-secondary border-0">Loading albums...</li>';
+    }
   }
-  if (groupList && groups.length > 0) {
-    groupList.innerHTML = groups
-      .map(
-        (g) =>
-          `<li class="list-group-item bg-dark text-light border-info">${g.name}</li>`
-      )
-      .join("");
+  if (groupList) {
+    if (groups.length > 0) {
+      groupList.innerHTML = groups
+        .map(
+          (g) =>
+            `<li class="list-group-item bg-dark text-light border-info">${g.name}</li>`
+        )
+        .join("");
+    } else {
+      groupList.innerHTML =
+        '<li class="list-group-item bg-dark text-secondary border-0">Loading groups...</li>';
+    }
   }
 
+  // ...
   const [freshUser, freshAlbums, freshGroups] = await Promise.all([
     (async () => {
       let user = null;
       try {
         const { data: sessionData, error: sessionError } =
-          await supabase.auth.getSession();
+          await supabaseClient.auth.getSession();
         if (sessionError || !sessionData || !sessionData.session) return null;
         const { data: userData, error: userError } =
-          await supabase.auth.getUser();
+          await supabaseClient.auth.getUser();
         user = userData && userData.user ? userData.user : null;
         if (userError || !user) return null;
         return {
@@ -174,14 +190,20 @@ async function loadProfile() {
     albums = freshAlbums;
     setCachedDataWithTimestamp("albums", albums);
     if (albumList) {
-      albumList.innerHTML = albums
-        .map((a) => {
-          const albumName = a.name || a.album || a.title || "(Untitled Album)";
-          const groupName =
-            a.group || a.group_name || a.groupName || "Unknown Group";
-          return `<li class="list-group-item bg-dark text-light border-info">${albumName} <span class="text-info small">(${groupName})</span></li>`;
-        })
-        .join("");
+      if (albums.length > 0) {
+        albumList.innerHTML = albums
+          .map((a) => {
+            const albumName =
+              a.name || a.album || a.title || "(Untitled Album)";
+            const groupName =
+              a.group || a.group_name || a.groupName || "Unknown Group";
+            return `<li class=\"list-group-item bg-dark text-light border-info\">${albumName} <span class=\"text-info small\">(${groupName})</span></li>`;
+          })
+          .join("");
+      } else {
+        albumList.innerHTML =
+          '<li class="list-group-item bg-dark text-secondary border-0">No albums found.</li>';
+      }
     }
   }
 
@@ -189,12 +211,17 @@ async function loadProfile() {
     groups = freshGroups;
     setCachedDataWithTimestamp("groups", groups);
     if (groupList) {
-      groupList.innerHTML = groups
-        .map(
-          (g) =>
-            `<li class="list-group-item bg-dark text-light border-info">${g.name}</li>`
-        )
-        .join("");
+      if (groups.length > 0) {
+        groupList.innerHTML = groups
+          .map(
+            (g) =>
+              `<li class=\"list-group-item bg-dark text-light border-info\">${g.name}</li>`
+          )
+          .join("");
+      } else {
+        groupList.innerHTML =
+          '<li class="list-group-item bg-dark text-secondary border-0">No groups found.</li>';
+      }
     }
   }
 
@@ -327,7 +354,8 @@ async function loadProfile() {
       displayNameStatus.classList.remove("text-danger");
       displayNameStatus.classList.remove("text-success");
       try {
-        const { error } = await supabase.auth.updateUser({
+        const supabaseClient = await supabasePromise;
+        const { error } = await supabaseClient.auth.updateUser({
           data: { displayname: newName },
         });
         if (error) {
