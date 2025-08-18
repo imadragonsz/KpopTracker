@@ -1,59 +1,20 @@
-// Handle edit group image file upload
-document.addEventListener("change", async function (e) {
-  if (e.target && e.target.id === "editGroupImageFile") {
-    const fileInput = e.target;
-    const status = document.getElementById("editGroupImageUploadStatus");
-    const hiddenInput = document.getElementById("editGroupImage");
-    if (!fileInput.files || !fileInput.files[0]) return;
-    const formData = new FormData();
-    formData.append("image", fileInput.files[0]);
-    status.textContent = "Uploading...";
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
-      hiddenInput.value = data.url;
-      status.textContent = "Upload successful!";
-    } catch (err) {
-      status.textContent = "Upload failed. Please try again.";
-      hiddenInput.value = "";
-    }
-  }
-});
-// Handle group image file upload
-document.addEventListener("change", async function (e) {
-  if (e.target && e.target.id === "groupImageFile") {
-    const fileInput = e.target;
-    const status = document.getElementById("groupImageUploadStatus");
-    const hiddenInput = document.getElementById("groupImage");
-    if (!fileInput.files || !fileInput.files[0]) return;
-    const formData = new FormData();
-    formData.append("image", fileInput.files[0]);
-    status.textContent = "Uploading...";
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
-      hiddenInput.value = data.url;
-      status.textContent = "Upload successful!";
-    } catch (err) {
-      status.textContent = "Upload failed. Please try again.";
-      hiddenInput.value = "";
-    }
-  }
-});
+console.log("[GroupsPage] groupsPage.js loaded");
 // --- Caching Utilities ---
 function getCachedData(key) {
   try {
     const cached = localStorage.getItem(key);
-    if (!cached) return null;
-    return JSON.parse(cached);
+    if (!cached) {
+      console.debug(`[GroupsPage] No cache for key: ${key}`);
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(cached);
+      console.debug(`[GroupsPage] Loaded cache for key: ${key}`, parsed);
+      return parsed;
+    } catch (e) {
+      console.warn(`[GroupsPage] Failed to parse cache for key: ${key}`);
+      return null;
+    }
   } catch (e) {
     return null;
   }
@@ -82,9 +43,7 @@ import { showMemberInfoModal } from "../components/memberModals.js";
 import { showAlbumInfoModal } from "../components/albumModals.js";
 const memberImage = document.getElementById("memberImage");
 // Modal and DOM element references
-const editGroupModal = new bootstrap.Modal(
-  document.getElementById("editGroupModal")
-);
+// Removed top-level editGroupModal initialization. Only initialize after modal is in DOM.
 const groupInfoModal = new bootstrap.Modal(
   document.getElementById("groupInfoModal")
 );
@@ -184,18 +143,30 @@ let isRenderingGroups = false;
 async function loadAndRenderGroups() {
   if (isRenderingGroups) return;
   isRenderingGroups = true;
+  console.log("[GroupsPage] loadAndRenderGroups called");
   // Try cache first
   let groups = getCachedData("groups");
   let fetchedGroups = null;
   if (!Array.isArray(groups)) {
-    groups = await fetchGroups();
+    console.log("[GroupsPage] No valid cache, fetching groups from API...");
+    try {
+      groups = await fetchGroups();
+      console.log("[GroupsPage] Groups fetched from API:", groups);
+    } catch (err) {
+      console.error("[GroupsPage] Error fetching groups:", err);
+      groups = [];
+    }
     if (!Array.isArray(groups)) groups = [];
     setCachedData("groups", groups);
     // groups is now up to date, continue to render below
   } else {
+    console.log("[GroupsPage] Using cached groups:", groups);
     // Fetch in background and update cache if changed
     fetchGroups().then((fresh) => {
       if (isDataDifferent(fresh, groups)) {
+        console.log(
+          "[GroupsPage] Cache is stale, updating cache with fresh groups."
+        );
         setCachedData("groups", fresh);
         // Do not trigger another reload here to avoid infinite loop
       }
@@ -224,6 +195,7 @@ async function loadAndRenderGroups() {
     groupCountSpan.style.verticalAlign = "middle";
   }
   groupList.innerHTML = "";
+  console.debug("[GroupsPage] Rendering groups:", groups);
   // Pagination logic
   const totalPages = Math.ceil(groups.length / GROUPS_PER_PAGE);
   if (currentGroupPage > totalPages) currentGroupPage = totalPages || 1;
@@ -294,33 +266,7 @@ async function loadAndRenderGroups() {
         }
       }
     );
-    document.addEventListener("DOMContentLoaded", function () {
-      const editGroupForm = document.getElementById("editGroupForm");
-      if (editGroupForm) {
-        editGroupForm.addEventListener("submit", function (e) {
-          e.preventDefault();
-          if (!editingGroupId) return;
-          const name = editGroupName.value.trim();
-          const image = editGroupImage.value.trim();
-          const notes = editGroupNotes.value.trim();
-          const imageStatus = document.getElementById(
-            "editGroupImageUploadStatus"
-          );
-          if (!image) {
-            imageStatus.textContent = "Please select or upload a group image.";
-            imageStatus.classList.add("text-danger");
-            return;
-          } else {
-            imageStatus.textContent = "";
-            imageStatus.classList.remove("text-danger");
-          }
-          updateGroup(editingGroupId, name, image, notes).then(() => {
-            editGroupModal.hide();
-            loadAndRenderGroups();
-          });
-        });
-      }
-    });
+    // Removed duplicate editGroupForm submit handler to avoid conflicts. Now handled in groupManagement.js only.
     // Group info event
     li.addEventListener("click", async function (e) {
       if (
@@ -442,6 +388,7 @@ async function loadAndRenderGroups() {
     groupList.parentNode.appendChild(paginationDiv);
   }
   isRenderingGroups = false;
+  console.log("[GroupsPage] Finished rendering groups.");
 }
 
 addMemberForm.addEventListener("submit", function (e) {
@@ -489,6 +436,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const image = editGroupImage.value.trim();
       const notes = editGroupNotes.value.trim();
       updateGroup(editingGroupId, name, image, notes).then(() => {
+        console.log("[GroupsPage] Group updated via editGroupForm");
         editGroupModal.hide();
         loadAndRenderGroups();
       });

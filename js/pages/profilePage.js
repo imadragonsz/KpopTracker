@@ -89,62 +89,56 @@ async function loadProfile() {
   await supabaseClient.auth.getUser();
   showLoading();
 
+  // Add a wrapper for all profile content if not present
+  let profileContent = document.getElementById("profile-content-wrapper");
+  if (!profileContent) {
+    profileContent = document.createElement("div");
+    profileContent.id = "profile-content-wrapper";
+    // Move all children of .container (main profile container) into this wrapper
+    const mainContainer = document.querySelector(
+      ".container.p-4.rounded.shadow-lg"
+    );
+    if (mainContainer) {
+      while (mainContainer.firstChild) {
+        profileContent.appendChild(mainContainer.firstChild);
+      }
+      mainContainer.appendChild(profileContent);
+    }
+  }
+
   const userEmailDiv = document.getElementById("user-email");
   const userJoinedDiv = document.getElementById("user-joined");
   const displayNameInput = document.getElementById("user-display-name-input");
   const displayNameStatus = document.getElementById("user-display-name-status");
   const saveDisplayNameBtn = document.getElementById("save-display-name-btn");
-  const profileInfoContainer = document.getElementById("profile-info");
   const albumList = document.getElementById("profile-album-list");
   const groupList = document.getElementById("profile-group-list");
   const recentUpdatedList = document.getElementById("profile-recent-updated");
   const recentAlbumsList = document.getElementById("profile-recent-albums");
   const mostCollectedDiv = document.getElementById("user-most-collected-group");
 
-  const cachedUser = getCachedDataWithTimestamp("user-info");
-  if (cachedUser && cachedUser.data) {
-    if (userEmailDiv) userEmailDiv.textContent = cachedUser.data.email || "-";
-    if (userJoinedDiv)
-      userJoinedDiv.textContent = cachedUser.data.created_at
-        ? new Date(cachedUser.data.created_at).toLocaleDateString()
-        : "-";
-    if (displayNameInput)
-      displayNameInput.value = cachedUser.data.displayname || "";
+  // Add login prompt if not logged in
+  let loginPrompt = document.getElementById("profile-login-prompt");
+  if (!loginPrompt) {
+    loginPrompt = document.createElement("div");
+    loginPrompt.id = "profile-login-prompt";
+    loginPrompt.style.display = "none";
+    loginPrompt.innerHTML = `<div class="text-center p-5"><h2 class="text-info mb-3"><i class="bi bi-person-lock"></i> Please log in to view your profile.</h2><button id="profile-login-btn" class="btn btn-info">Log In</button></div>`;
+    const mainContainer = document.querySelector(
+      ".container.p-4.rounded.shadow-lg"
+    );
+    if (mainContainer) mainContainer.insertBefore(loginPrompt, profileContent);
   }
 
+  const cachedUser = getCachedDataWithTimestamp("user-info");
   const cachedAlbums = getCachedDataWithTimestamp("albums");
   const cachedGroups = getCachedDataWithTimestamp("groups");
   let albums = (cachedAlbums && cachedAlbums.data) || [];
   let groups = (cachedGroups && cachedGroups.data) || [];
-  // ...
-  if (albumList) {
-    if (albums.length > 0) {
-      albumList.innerHTML = albums
-        .map((a) => {
-          const albumName = a.name || a.album || a.title || "(Untitled Album)";
-          const groupName =
-            a.group || a.group_name || a.groupName || "Unknown Group";
-          return `<li class="list-group-item bg-dark text-light border-info">${albumName} <span class="text-info small">(${groupName})</span></li>`;
-        })
-        .join("");
-    } else {
-      albumList.innerHTML =
-        '<li class="list-group-item bg-dark text-secondary border-0">Loading albums...</li>';
-    }
-  }
-  if (groupList) {
-    if (groups.length > 0) {
-      groupList.innerHTML = groups
-        .map(
-          (g) =>
-            `<li class="list-group-item bg-dark text-light border-info">${g.name}</li>`
-        )
-        .join("");
-    } else {
-      groupList.innerHTML =
-        '<li class="list-group-item bg-dark text-secondary border-0">Loading groups...</li>';
-    }
-  }
+
+  // Hide all profile content by default until login is checked
+  if (profileContent) profileContent.style.display = "none";
+  if (loginPrompt) loginPrompt.style.display = "none";
 
   // ...
   const [freshUser, freshAlbums, freshGroups] = await Promise.all([
@@ -176,15 +170,34 @@ async function loadProfile() {
       : Promise.resolve(groups),
   ]);
 
-  if (freshUser) {
-    setCachedDataWithTimestamp("user-info", freshUser);
-    if (userEmailDiv) userEmailDiv.textContent = freshUser.email || "-";
-    if (userJoinedDiv)
-      userJoinedDiv.textContent = freshUser.created_at
-        ? new Date(freshUser.created_at).toLocaleDateString()
-        : "-";
-    if (displayNameInput) displayNameInput.value = freshUser.displayname || "";
+  if (!freshUser) {
+    // Not logged in: hide profile, show login prompt
+    if (profileContent) profileContent.style.display = "none";
+    if (loginPrompt) loginPrompt.style.display = "block";
+    // Add click handler to login button
+    const loginBtn = document.getElementById("profile-login-btn");
+    if (loginBtn) {
+      loginBtn.onclick = () => {
+        // Try to trigger login modal if available
+        const navLoginBtn = document.getElementById("loginBtn");
+        if (navLoginBtn) navLoginBtn.click();
+      };
+    }
+    hideLoading();
+    return;
+  } else {
+    // Logged in: show profile, hide login prompt
+    if (profileContent) profileContent.style.display = "block";
+    if (loginPrompt) loginPrompt.style.display = "none";
   }
+
+  setCachedDataWithTimestamp("user-info", freshUser);
+  if (userEmailDiv) userEmailDiv.textContent = freshUser.email || "-";
+  if (userJoinedDiv)
+    userJoinedDiv.textContent = freshUser.created_at
+      ? new Date(freshUser.created_at).toLocaleDateString()
+      : "-";
+  if (displayNameInput) displayNameInput.value = freshUser.displayname || "";
 
   if (Array.isArray(freshAlbums)) {
     albums = freshAlbums;
@@ -394,6 +407,36 @@ window.loadProfile = loadProfile;
 const logoutBtn = document.getElementById("logoutBtnProfile");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
+    // Gather data that would be shown in the profile section
+    const userInfo = (() => {
+      try {
+        const cached = localStorage.getItem("user-info");
+        return cached ? JSON.parse(cached).data : null;
+      } catch {
+        return null;
+      }
+    })();
+    const albums = (() => {
+      try {
+        const cached = localStorage.getItem("albums");
+        return cached ? JSON.parse(cached).data : [];
+      } catch {
+        return [];
+      }
+    })();
+    const groups = (() => {
+      try {
+        const cached = localStorage.getItem("groups");
+        return cached ? JSON.parse(cached).data : [];
+      } catch {
+        return [];
+      }
+    })();
+    // Clear all local and session storage (browser cache)
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {}
     await supabase.auth.signOut();
     window.location.reload();
   });

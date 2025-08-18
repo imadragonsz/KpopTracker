@@ -48,51 +48,41 @@ export async function removeUserFromGroup(groupId) {
     "groupId:",
     groupId
   );
-  if (userIds.length === 0) {
-    // No users left, delete group
-    const { error: deleteError } = await supabase
-      .from("groups")
-      .delete()
-      .eq("id", groupId);
-    if (deleteError) {
-      console.error(
-        "[removeUserFromGroup] Error deleting group:",
-        deleteError,
-        "groupId:",
-        groupId
-      );
-      return { error: deleteError };
-    }
-    console.log("[removeUserFromGroup] Group deleted:", groupId);
-    return { deleted: true };
-  } else {
-    // Update user_id array
-    const { error: updateError, data: updateData } = await supabase
-      .from("groups")
-      .update({ user_id: userIds })
-      .eq("id", groupId)
-      .select();
-    if (updateError) {
-      console.error(
-        "[removeUserFromGroup] Error updating group:",
-        updateError,
-        "groupId:",
-        groupId,
-        "userIds:",
-        userIds
-      );
-      return { error: updateError };
-    }
-    console.log(
-      "[removeUserFromGroup] Group updated:",
+  // Always update user_id array, never delete group row
+  const { error: updateError, data: updateData } = await supabase
+    .from("groups")
+    .update({ user_id: userIds })
+    .eq("id", groupId)
+    .select();
+  if (updateError) {
+    console.error(
+      "[removeUserFromGroup] Error updating group:",
+      updateError,
+      "groupId:",
       groupId,
       "userIds:",
-      userIds,
-      "updateData:",
-      updateData
+      userIds
     );
-    return { removed: true };
+    alert(
+      "[removeUserFromGroup] Error updating group: " +
+        (updateError.message || updateError)
+    );
+    return { error: updateError };
   }
+  console.log(
+    "[removeUserFromGroup] Group updated:",
+    groupId,
+    "userIds:",
+    userIds,
+    "updateData:",
+    updateData
+  );
+  if (!updateData || !Array.isArray(updateData) || !updateData.length) {
+    alert(
+      "[removeUserFromGroup] No data returned from update. Check Supabase table and permissions."
+    );
+  }
+  return { removed: true, updateData };
 }
 import { supabasePromise } from "./supabaseClient.js";
 import { getCurrentUser } from "../auth.js";

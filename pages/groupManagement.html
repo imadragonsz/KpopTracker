@@ -1,4 +1,4 @@
-  <script type="module" src="../js/pages/groupManagement.js"></script>
+<script type="module" src="../js/pages/groupManagement.js"></script>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -44,9 +44,21 @@
         fetch("./components/navbar.html")
           .then((res) => res.text())
           .then((html) => {
-            document.getElementById("navbar-include").innerHTML = html;
-            document.getElementById("navbar-include").dataset.loaded = "true";
-            // Re-initialize Bootstrap Collapse for navbar toggler to fix lag
+            const navbarDiv = document.getElementById("navbar-include");
+            navbarDiv.innerHTML = html;
+            navbarDiv.dataset.loaded = "true";
+            // Execute all scripts in the injected navbar
+            const scripts = navbarDiv.querySelectorAll("script");
+            scripts.forEach((oldScript) => {
+              const newScript = document.createElement("script");
+              if (oldScript.type) newScript.type = oldScript.type;
+              if (oldScript.src) {
+                newScript.src = oldScript.src;
+              } else {
+                newScript.textContent = oldScript.textContent;
+              }
+              document.body.appendChild(newScript);
+            });
             setTimeout(() => {
               const toggler = document.querySelector(".navbar-toggler");
               const collapse = document.getElementById("navbarNav");
@@ -54,7 +66,6 @@
                 new window.bootstrap.Collapse(collapse, { toggle: false });
               }
             }, 0);
-            // Only load scripts once
             if (!window._navbarScriptsLoaded) {
               window._navbarScriptsLoaded = true;
               const supabaseScript = document.createElement("script");
@@ -74,22 +85,26 @@
                   s.src = src;
                   document.body.appendChild(s);
                 });
-                // After all scripts, check for login modal flag
-                setTimeout(() => {
-                  if (sessionStorage.getItem("showLoginOnGroupPage")) {
-                    sessionStorage.removeItem("showLoginOnGroupPage");
-                    setTimeout(() => {
-                      const loginBtn = document.getElementById("loginBtn");
-                      const logoutBtn = document.getElementById("logoutBtn");
-                      if (
-                        loginBtn &&
-                        (!logoutBtn || logoutBtn.classList.contains("d-none"))
-                      ) {
-                        loginBtn.click();
-                      }
-                    }, 500);
-                  }
-                }, 1000);
+                // Wait for updateAuthUIReady before calling updateAuthUI or running dependent code
+                window.addEventListener("updateAuthUIReady", () => {
+                  if (window.updateAuthUI) window.updateAuthUI();
+                  // After all scripts, check for login modal flag
+                  setTimeout(() => {
+                    if (sessionStorage.getItem("showLoginOnGroupPage")) {
+                      sessionStorage.removeItem("showLoginOnGroupPage");
+                      setTimeout(() => {
+                        const loginBtn = document.getElementById("loginBtn");
+                        const logoutBtn = document.getElementById("logoutBtn");
+                        if (
+                          loginBtn &&
+                          (!logoutBtn || logoutBtn.classList.contains("d-none"))
+                        ) {
+                          loginBtn.click();
+                        }
+                      }, 500);
+                    }
+                  }, 1000);
+                }, { once: true });
               };
               document.body.appendChild(supabaseScript);
             }
@@ -113,7 +128,6 @@
           class="mb-3 mt-2 shadow-none"
         />
         <h1 class="fw-bold mb-2 hero-heading-text text-center">
-  <script type="module" src="../js/pages/groupsPage.js"></script>
           Group & Member Management
         </h1>
         <p class="lead mb-3 hero-lead-text text-center">
@@ -469,22 +483,138 @@
           <div class="modal-header">
             <h5 class="modal-title" id="albumInfoModalLabel">Album Info</h5>
             <button
-              <script type="module">
-              import { showGalleryModal } from '../js/components/galleryModal.js';
-              document.getElementById('openGroupGalleryModal').onclick = function() {
-                showGalleryModal({
-                  onSelect: url => {
-                    document.getElementById('groupImage').value = url;
-                  },
-                  title: 'Select or Upload Group Image'
-                });
-              };
-              document.getElementById('openEditGroupGalleryModal').onclick = function() {
-                showGalleryModal({
-                  onSelect: url => {
-                    document.getElementById('editGroupImage').value = url;
-                  },
-                  title: 'Select or Upload Group Image'
-                });
-              };
-              </script>
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="albumInfoBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="userMenuModal"
+      tabindex="-1"
+      aria-labelledby="userMenuModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header">
+            <h5 class="modal-title" id="userMenuModalLabel">User Menu</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="userMenuModalBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // After navbar is injected, bind userMenuBtn logic
+      function setupUserMenuBtnListener() {
+        var btn = document.getElementById('userMenuBtn');
+        if (!btn) return;
+        btn.addEventListener('click', function() {
+          console.log('userMenuBtn pressed');
+          var ModalClass = window.bootstrap && window.bootstrap.Modal ? window.bootstrap.Modal : (window.Modal || null);
+          if (!ModalClass) {
+            console.warn('Bootstrap Modal not found.');
+            return;
+          }
+          var modalElem = document.getElementById('userMenuModal');
+          if (!modalElem) {
+            console.warn('userMenuModal element not found.');
+            return;
+          }
+          function showModal(isLoggedIn, email) {
+            var body = document.getElementById('userMenuModalBody');
+            if (!body) return;
+            if (isLoggedIn) {
+              body.innerHTML = `
+                <div class=\"mb-3 text-center\">
+                  <i class=\"bi bi-person-circle\" style=\"font-size:2.5em;\"></i>
+                  <div class=\"fw-bold mt-2\">${email}</div>
+                </div>
+                <div class=\"d-grid gap-2\">
+                  <a href=\"/pages/profile.html\" class=\"btn btn-info\">My Profile</a>
+                  <button id=\"logoutBtnModal\" class=\"btn btn-outline-secondary\">Logout</button>
+                </div>
+              `;
+              setTimeout(function() {
+                var logoutBtn = document.getElementById('logoutBtnModal');
+                if (logoutBtn) {
+                  logoutBtn.onclick = function() {
+                    if (window.signOut) {
+                      window.signOut();
+                    } else if (window.supabase) {
+                      window.supabase.auth.signOut().then(function() { window.location.reload(); });
+                    } else {
+                      window.location.reload();
+                    }
+                  };
+                }
+              }, 0);
+            } else {
+              body.innerHTML = `
+                <div class=\"mb-3 text-center\">
+                  <i class=\"bi bi-person-circle\" style=\"font-size:2.5em;\"></i>
+                </div>
+                <div class=\"d-grid gap-2\">
+                  <button id=\"loginBtnModal\" class=\"btn btn-info\">Login</button>
+                </div>
+              `;
+              setTimeout(function() {
+                var loginBtn = document.getElementById('loginBtnModal');
+                if (loginBtn) {
+                  loginBtn.onclick = function() {
+                    if (typeof showLoginModal === 'function') {
+                      showLoginModal();
+                    } else {
+                      var modal = document.getElementById('authModal');
+                      if (modal && window.bootstrap) {
+                        var modalInstance = new window.bootstrap.Modal(modal);
+                        modalInstance.show();
+                      }
+                    }
+                  };
+                }
+              }, 0);
+            }
+            var modal = new ModalClass(modalElem);
+            modal.show();
+          }
+          // Always use Supabase as the source of truth for auth state
+          if (window.supabase && window.supabase.auth && window.supabase.auth.getUser) {
+            window.supabase.auth.getUser().then(function(resp) {
+              var user = resp && resp.data && resp.data.user;
+              if (user && user.email) {
+                showModal(true, user.email);
+              } else {
+                showModal(false, '');
+              }
+            });
+          } else {
+            showModal(false, '');
+          }
+        });
+      }
+      // Wait for navbar to be injected, then bind
+      function tryBindUserMenuBtn(retries) {
+        if (document.getElementById('userMenuBtn')) {
+          setupUserMenuBtnListener();
+        } else if (retries > 0) {
+          setTimeout(function() { tryBindUserMenuBtn(retries - 1); }, 200);
+        }
+      }
+      tryBindUserMenuBtn(20);
+    </script>
+  </body>
+</html>
