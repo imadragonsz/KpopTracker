@@ -1,3 +1,7 @@
+/* Transparent background for member list items in member management modal */
+.list-group-item.d-flex.align-items-center.member-list-item {
+  background-color: transparent !important;
+}
 /* Modal Styles */
 .modal,
 .modal-content,
@@ -7,7 +11,7 @@
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
   color: #f4f4f4;
   border-radius: 16px;
-  box-shadow: 0 2px 12px 0 #00000022;
+  /* box-shadow: 0 2px 12px 0 #00000022; */
 }
 .modal {
   padding-top: 40px !important;

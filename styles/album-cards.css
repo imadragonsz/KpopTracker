@@ -1,3 +1,159 @@
+/* Ensure album-list-item and list-group-item inside modals are styled like group cards */
+.modal .album-list-item,
+.modal .list-group-item.album-list-item {
+  background: #232946 !important;
+  color: #eaeaea !important;
+  border: 2px solid #43c6ac !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 16px 0 #43c6ac33 !important;
+  margin-bottom: 1.5em !important;
+  margin-top: 0.5em !important;
+  transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
+}
+/* ABSOLUTE OVERRIDE for Bootstrap .list-group-item in group management */
+#groupList .list-group-item {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  border: none !important;
+  background: transparent !important;
+  color: #eaeaea !important;
+}
+#groupList .redesigned-album-card {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: #232946 !important;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px 0 #43c6ac33;
+  border: 2px solid #43c6ac;
+  margin-bottom: 1.5em;
+  margin-top: 0.5em;
+  color: #eaeaea !important;
+  transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
+}
+/* Ensure group cards in group management are always dark, overriding Bootstrap .list-group-item */
+body #groupList .list-group-item.album-list-item.redesigned-album-card {
+  background-color: #232946 !important;
+  color: #eaeaea !important;
+  border: 2px solid #43c6ac !important;
+}
+/* Force dark background and light text for group cards in group management */
+#groupList .album-list-item.redesigned-album-card {
+  background: #232946 !important;
+  color: #eaeaea !important;
+  border: 2px solid #43c6ac !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 16px 0 #43c6ac33 !important;
+  margin-bottom: 1.5em !important;
+  margin-top: 0.5em !important;
+  transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
+}
+#groupList .album-list-item.redesigned-album-card:hover {
+  box-shadow: 0 4px 32px 0 #43c6ac55 !important;
+  border-color: #67e8f9 !important;
+  background: #232a46 !important;
+}
+/* Uniform group image style for browse page */
+.browse-group-img,
+.album-card-group-img {
+  width: 140px;
+  height: 140px;
+  max-width: 140px;
+  max-height: 140px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: none !important;
+  display: block;
+  margin: 20px auto 1rem auto;
+}
+#browseResults {
+  padding-left: 0 !important;
+  padding-right: 30px !important;
+}
+#browseGroupCardsRow,
+#browseResults {
+  padding-right: 30px;
+}
+.browse-flex-row {
+  gap: 1.2rem;
+  background: #20222e;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px 0 #232a3633;
+  scrollbar-color: #43c6ac #181a20;
+  scrollbar-width: thin;
+  padding: 0.5rem 0;
+  margin-left: 1.2rem;
+  margin-right: 20px;
+}
+/* --- Custom horizontal card row improvements for browse page --- */
+.browse-flex-row {
+  gap: 1.2rem;
+  background: #20222e;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px 0 #232a3633;
+  scrollbar-color: #43c6ac #181a20;
+  scrollbar-width: thin;
+  padding: 0.5rem 10px;
+}
+.browse-flex-row::-webkit-scrollbar {
+  height: 10px;
+  background: #232946;
+}
+.browse-flex-row::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #43c6ac 0%, #232a36 100%);
+  border-radius: 8px;
+  border: 2px solid #181a20;
+}
+.browse-flex-row::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #67e8f9 0%, #43c6ac 100%);
+}
+.browse-flex-row::-webkit-scrollbar-track {
+  background: #181a20;
+  border-radius: 8px;
+}
+/* --- Mobile improvements for browse page --- */
+@media (max-width: 576px) {
+  .redesigned-album-card,
+  .album-card-flex {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-radius: 10px !important;
+    margin-bottom: 1em !important;
+    padding: 0.7em 0.5em !important;
+  }
+  .album-card-img-wrap {
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 auto 0.5em auto !important;
+    justify-content: center !important;
+  }
+  .album-card-img {
+    width: 100% !important;
+    max-width: 220px !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    display: block !important;
+  }
+  .album-card-title {
+    font-size: 1.05rem !important;
+    flex-wrap: wrap !important;
+    gap: 0.3em !important;
+  }
+  .album-card-actions .btn {
+    min-width: 90px !important;
+    font-size: 1.05em !important;
+    padding: 0.5em 0.7em !important;
+  }
+  .form-control {
+    font-size: 1.1em !important;
+    padding: 0.7em 1em !important;
+    border-radius: 0.7em !important;
+  }
+}
 /* Make list-group text more visible on dark backgrounds */
 .list-group {
   --bs-list-group-color: #eaeaea;
@@ -93,17 +249,44 @@
 /* Increased max width for album cards */
 /* Make album cards utilize full width of container */
 .redesigned-album-card {
-  max-width: 900px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  background: #232946;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px 0 #232a3620;
-  border: 1.5px solid #313a5a;
-  margin-bottom: 1.2em;
+  background: #232946 !important;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px 0 #43c6ac33;
+  border: 2px solid #43c6ac;
+  margin-bottom: 1.5em;
+  margin-top: 0.5em;
+  color: #eaeaea !important;
+  transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
+}
+.redesigned-album-card:hover {
+  box-shadow: 0 4px 32px 0 #43c6ac55;
+  border-color: #67e8f9;
+  background: #232a46 !important;
+}
+.album-list-item {
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  border: none !important;
+  background: transparent !important;
+  color: #eaeaea !important;
+}
+.album-card-img-wrap {
+  background: #191a22 !important;
+}
+@media (max-width: 700px) {
+  .redesigned-album-card {
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+    max-width: 100%;
+    border-radius: 10px;
+    margin-bottom: 1em;
+  }
 }
 .album-card-flex {
   display: flex;

@@ -31,7 +31,31 @@ export async function loadAndRenderAlbums() {
         typeof window !== "undefined" &&
         typeof window.updateAlbumFilters === "function"
       ) {
+        // Preserve filter UI state
+        const searchInput = document.getElementById("searchInput");
+        const filterGroup = document.getElementById("filterGroup");
+        const filterReleaseDate = document.getElementById("filterReleaseDate");
+        const sortAlbums = document.getElementById("sortAlbums");
+        const reverseSortBtn = document.getElementById("reverseSortBtn");
+        const prevState = {
+          search: searchInput ? searchInput.value : "",
+          group: filterGroup ? filterGroup.value : "",
+          date: filterReleaseDate ? filterReleaseDate.value : "",
+          sort: sortAlbums ? sortAlbums.value : "",
+          reverse: reverseSortBtn
+            ? reverseSortBtn.getAttribute("data-reversed")
+            : null,
+        };
         window.updateAlbumFilters();
+        // Restore filter UI state
+        if (searchInput) searchInput.value = prevState.search;
+        if (filterGroup) filterGroup.value = prevState.group;
+        if (filterReleaseDate) filterReleaseDate.value = prevState.date;
+        if (sortAlbums) sortAlbums.value = prevState.sort;
+        if (reverseSortBtn && prevState.reverse !== null)
+          reverseSortBtn.setAttribute("data-reversed", prevState.reverse);
+        // Reapply filters after restoring UI state
+        if (typeof window.updateFilters === "function") window.updateFilters();
       } else {
         await renderAlbums();
       }
@@ -52,7 +76,31 @@ export async function loadAndRenderAlbums() {
         typeof window !== "undefined" &&
         typeof window.updateAlbumFilters === "function"
       ) {
+        // Preserve filter UI state
+        const searchInput = document.getElementById("searchInput");
+        const filterGroup = document.getElementById("filterGroup");
+        const filterReleaseDate = document.getElementById("filterReleaseDate");
+        const sortAlbums = document.getElementById("sortAlbums");
+        const reverseSortBtn = document.getElementById("reverseSortBtn");
+        const prevState = {
+          search: searchInput ? searchInput.value : "",
+          group: filterGroup ? filterGroup.value : "",
+          date: filterReleaseDate ? filterReleaseDate.value : "",
+          sort: sortAlbums ? sortAlbums.value : "",
+          reverse: reverseSortBtn
+            ? reverseSortBtn.getAttribute("data-reversed")
+            : null,
+        };
         window.updateAlbumFilters();
+        // Restore filter UI state
+        if (searchInput) searchInput.value = prevState.search;
+        if (filterGroup) filterGroup.value = prevState.group;
+        if (filterReleaseDate) filterReleaseDate.value = prevState.date;
+        if (sortAlbums) sortAlbums.value = prevState.sort;
+        if (reverseSortBtn && prevState.reverse !== null)
+          reverseSortBtn.setAttribute("data-reversed", prevState.reverse);
+        // Reapply filters after restoring UI state
+        if (typeof window.updateFilters === "function") window.updateFilters();
       } else {
         await renderAlbums();
       }

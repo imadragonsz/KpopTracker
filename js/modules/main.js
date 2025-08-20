@@ -5,7 +5,7 @@ import { setupAlbumEventHandlers } from "./albumEvents.js";
 import { loadAndRenderAlbums } from "./albumLoader.js";
 
 import { loadAndPopulateGroups } from "./groupLoader.js";
-import { populateYearSelect } from "./yearUtils.js";
+// import { populateYearSelect } from "./yearUtils.js";
 import { showLoading, hideLoading } from "../components/loading.js";
 
 function runWhenBootstrapAndDOMReady(fn) {
@@ -31,7 +31,7 @@ function runWhenBootstrapAndDOMReady(fn) {
 async function albumPageInit() {
   showLoading();
   setupAlbumEventHandlers();
-  populateYearSelect();
+  // populateYearSelect();
   await Promise.all([loadAndPopulateGroups(), loadAndRenderAlbums()]);
   hideLoading();
 }

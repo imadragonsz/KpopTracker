@@ -92,13 +92,14 @@ export async function addAlbum(album) {
 export async function updateAlbum(id, album) {
   // No user_id filtering here, just update the album fields
   const { onTheWay, ...albumToSave } = album;
+  // ...existing code...
   const supabase = await supabasePromise;
   const { data, error } = await supabase
     .from("albums")
     .update(albumToSave)
     .eq("id", id);
   if (error) {
-    console.error("[DEBUG] updateAlbum: Supabase error", error);
+    // ...existing code...
     return { error };
   }
   return { data };
@@ -128,10 +129,10 @@ export async function deleteAlbum(id) {
     return;
   }
   let userIds = Array.isArray(albums[0].user_id) ? [...albums[0].user_id] : [];
-  console.log("[deleteAlbum] userIds before:", userIds);
+  // ...existing code...
   // Remove the user from the array (as UUID string)
   userIds = userIds.filter((uid) => String(uid) !== String(user.id));
-  console.log("[deleteAlbum] userIds after removal:", userIds);
+  // ...existing code...
   // Only update if the user was present
   if (albums[0].user_id.some((uid) => String(uid) === String(user.id))) {
     const { error: updateError } = await supabase
@@ -141,7 +142,7 @@ export async function deleteAlbum(id) {
     if (updateError) {
       console.error("[deleteAlbum] Error updating user_id array:", updateError);
     } else {
-      console.log("[deleteAlbum] user_id updated:", userIds);
+      // ...existing code...
     }
   } else {
     console.warn(

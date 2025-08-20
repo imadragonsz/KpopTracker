@@ -15,14 +15,7 @@ export async function removeUserFromGroup(groupId) {
     .from("groups")
     .select("user_id")
     .eq("id", groupId);
-  console.log(
-    "[removeUserFromGroup] Fetched group for id:",
-    groupId,
-    "Result:",
-    groups,
-    "Error:",
-    error
-  );
+  // ...existing code...
   if (error || !groups || !groups.length) {
     console.error(
       "[removeUserFromGroup] Error fetching group:",
@@ -33,21 +26,9 @@ export async function removeUserFromGroup(groupId) {
     return { error };
   }
   let userIds = groups[0].user_id || [];
-  console.log(
-    "[removeUserFromGroup] userIds before:",
-    userIds,
-    "user:",
-    user.id,
-    "groupId:",
-    groupId
-  );
+  // ...existing code...
   userIds = userIds.filter((uid) => String(uid) !== String(user.id));
-  console.log(
-    "[removeUserFromGroup] userIds after:",
-    userIds,
-    "groupId:",
-    groupId
-  );
+  // ...existing code...
   // Always update user_id array, never delete group row
   const { error: updateError, data: updateData } = await supabase
     .from("groups")
@@ -69,14 +50,7 @@ export async function removeUserFromGroup(groupId) {
     );
     return { error: updateError };
   }
-  console.log(
-    "[removeUserFromGroup] Group updated:",
-    groupId,
-    "userIds:",
-    userIds,
-    "updateData:",
-    updateData
-  );
+  // ...existing code...
   if (!updateData || !Array.isArray(updateData) || !updateData.length) {
     alert(
       "[removeUserFromGroup] No data returned from update. Check Supabase table and permissions."

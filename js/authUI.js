@@ -132,10 +132,7 @@ window._authFormSubmitHandler = async (e) => {
   e.preventDefault();
   const email = document.getElementById("authEmail").value.trim();
   const password = document.getElementById("authPassword").value;
-  console.log("[LoginModal] Submit pressed", {
-    email,
-    passwordLength: password.length,
-  });
+  // ...existing code...
   if (!email || !password) {
     document.getElementById("authError").textContent =
       "Email and password are required.";
@@ -161,7 +158,7 @@ window._authFormSubmitHandler = async (e) => {
       return;
     }
     const { data, error } = signInResult || {};
-    console.log("[LoginModal] signIn result", { data, error });
+    // ...existing code...
     if (timeout) {
       document.getElementById("authError").textContent =
         "Login request timed out. Check your network or Supabase setup.";

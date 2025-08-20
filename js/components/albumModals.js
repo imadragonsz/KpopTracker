@@ -43,7 +43,9 @@ export async function showAlbumInfoModal(album) {
   )}' class='text-info album-group-link' style='cursor:pointer;text-decoration:underline;'>${
     album.group
   }</a></div>`;
-  albumHtml += `<div class='text-center mb-2'><span class='fw-bold'>Year:</span> ${album.year}</div>`;
+  albumHtml += `<div class='text-center mb-2'><span class='fw-bold'>Release Date:</span> ${
+    album.releaseDate || ""
+  }</div>`;
 
   // Fetch per-user versions for this album
   const userVersions = await fetchUserAlbumVersions(album.id);

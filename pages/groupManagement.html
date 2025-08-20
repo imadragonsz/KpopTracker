@@ -1,3 +1,17 @@
+    <!-- Member Management Modal for add/edit member -->
+    <div class="modal fade" id="memberManagementModal" tabindex="-1" aria-labelledby="memberManagementModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header">
+            <h5 class="modal-title" id="memberManagementModalLabel">Member Management</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Dynamic form will be injected here by showMemberManagementModal -->
+          </div>
+        </div>
+      </div>
+    </div>
 <script type="module" src="../js/pages/groupManagement.js"></script>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,83 +49,70 @@
   <link rel="stylesheet" href="../styles/forms.css" />
   <link rel="stylesheet" href="../styles/loading.css" />
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="/styles/animations.css" />
   </head>
   <body class="profile-bg">
     <div id="navbar-include"></div>
     <script>
-      // Only load and inject the navbar if not already present
-      if (!document.getElementById("navbar-include").dataset.loaded) {
-        fetch("./components/navbar.html")
-          .then((res) => res.text())
-          .then((html) => {
-            const navbarDiv = document.getElementById("navbar-include");
-            navbarDiv.innerHTML = html;
-            navbarDiv.dataset.loaded = "true";
-            // Execute all scripts in the injected navbar
-            const scripts = navbarDiv.querySelectorAll("script");
-            scripts.forEach((oldScript) => {
-              const newScript = document.createElement("script");
-              if (oldScript.type) newScript.type = oldScript.type;
-              if (oldScript.src) {
-                newScript.src = oldScript.src;
-              } else {
-                newScript.textContent = oldScript.textContent;
-              }
-              document.body.appendChild(newScript);
-            });
-            setTimeout(() => {
-              const toggler = document.querySelector(".navbar-toggler");
-              const collapse = document.getElementById("navbarNav");
-              if (window.bootstrap && toggler && collapse) {
-                new window.bootstrap.Collapse(collapse, { toggle: false });
-              }
-            }, 0);
-            if (!window._navbarScriptsLoaded) {
-              window._navbarScriptsLoaded = true;
-              const supabaseScript = document.createElement("script");
-              supabaseScript.src =
-                "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js";
-              supabaseScript.onload = () => {
-                const scripts = [
-                  "../js/components/loading.js",
-                  "../js/authUI.js",
-                  "../js/api/supabaseClient.js",
-                  "../js/api/groupApi.js",
-                  "../js/api/albumApi.js"
-                ];
-                scripts.forEach((src) => {
-                  const s = document.createElement("script");
-                  s.type = "module";
-                  s.src = src;
-                  document.body.appendChild(s);
-                });
-                // Wait for updateAuthUIReady before calling updateAuthUI or running dependent code
-                window.addEventListener("updateAuthUIReady", () => {
-                  if (window.updateAuthUI) window.updateAuthUI();
-                  // After all scripts, check for login modal flag
-                  setTimeout(() => {
-                    if (sessionStorage.getItem("showLoginOnGroupPage")) {
-                      sessionStorage.removeItem("showLoginOnGroupPage");
-                      setTimeout(() => {
-                        const loginBtn = document.getElementById("loginBtn");
-                        const logoutBtn = document.getElementById("logoutBtn");
-                        if (
-                          loginBtn &&
-                          (!logoutBtn || logoutBtn.classList.contains("d-none"))
-                        ) {
-                          loginBtn.click();
-                        }
-                      }, 500);
-                    }
-                  }, 1000);
-                }, { once: true });
-              };
-              document.body.appendChild(supabaseScript);
-            }
-          });
-      }
-    </script>
+    (async function loadNavbarAndScripts() {
+      const navbarDiv = document.getElementById("navbar-include");
+      if (navbarDiv.dataset.loaded) return;
 
+      // Fetch and inject navbar HTML
+      const html = await fetch("./components/navbar.html").then(res => res.text());
+
+  navbarDiv.innerHTML = html;
+  navbarDiv.dataset.loaded = "true";
+
+  // Dynamically load navbar.js after injection
+  const script = document.createElement('script');
+  script.type = 'module';
+  script.src = '../js/navbar.js';
+  document.body.appendChild(script);
+
+      // Wait for userMenuModal.js to be loaded, then bind userMenuBtn
+      function waitForUserMenuModal(retries) {
+        if (window.tryBindUserMenuBtn) {
+          window.tryBindUserMenuBtn(20);
+        } else if (retries > 0) {
+          setTimeout(() => waitForUserMenuModal(retries - 1), 200);
+        }
+      }
+      waitForUserMenuModal(20);
+
+      // Load Supabase and Bootstrap if not already loaded
+      const loadScript = (src, type = "text/javascript") => new Promise((resolve, reject) => {
+        if ([...document.scripts].some(s => s.src.includes(src))) return resolve();
+        const s = document.createElement("script");
+        s.src = src;
+        s.type = type;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.body.appendChild(s);
+      });
+
+      await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js");
+      await loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js");
+
+      // Load your app scripts (as modules if needed)
+      const appScripts = [
+        '../js/components/loading.js',
+        '../js/authUI.js',
+        '../js/api/supabaseClient.js',
+        '../js/api/groupApi.js',
+        '../js/api/albumApi.js',
+        '../js/pages/groupManagement.js'
+      ];
+      for (const src of appScripts) {
+        await loadScript(src, "module");
+      }
+
+      // Wait for updateAuthUIReady before running dependent code
+      window.addEventListener("updateAuthUIReady", () => {
+        if (typeof window.updateAuthUI === "function") window.updateAuthUI();
+      }, { once: true });
+    })();
+    </script>
     <section class="py-5 text-center hero-section">
       <div class="container">
         <img
@@ -137,15 +138,15 @@
       </div>
     </section>
     <div
-      class="container p-4 rounded shadow-lg main-container"
+      class="container p-4 rounded shadow-lg main-container fade-in"
       style="
         margin-top: 20px;
-        max-width: 700px;
+        max-width: 80%;
         background: #232946;
         width: 100%;
       "
     >
-      <div class="row g-3 mb-3 align-items-end">
+  <div class="row g-3 mb-3 d-flex align-items-end">
         <div class="col-12 col-md-6">
           <input
             type="text"
@@ -157,8 +158,8 @@
         <div class="col-12 col-md-6 d-flex align-items-center gap-2">
           <select
             id="groupSortSelect"
-            class="form-select flex-grow-1"
-            style="max-width: 70%"
+            class="form-select version-list mb-2"
+            style="max-width: 70%; min-height: 40px; font-size: 0.95em; gap: 0.2em;"
           >
             <option value="az">Sort: Group A-Z</option>
             <option value="za">Sort: Group Z-A</option>
@@ -174,7 +175,7 @@
 
       <div class="row g-3 mb-4">
         <div class="col-12">
-          <div class="card border-info bg-dark">
+          <div class="card border-info bg-dark card-pop">
             <div class="card-body">
               <form id="addGroupForm" class="row g-2 align-items-end">
                 <div class="col-12 col-md-8">
@@ -191,7 +192,7 @@
                   <div class="mb-2">
                     <button
                       type="button"
-                      class="btn btn-outline-info btn-sm"
+                      class="btn btn-outline-info btn-sm animated-btn"
                       id="showGroupImageModal"
                     >
                       Choose Existing Image
@@ -214,7 +215,7 @@
                 <div class="col-12 d-grid mt-2">
                   <button
                     type="submit"
-                    class="btn btn-info fw-bold add-group-btn-mb"
+                    class="btn btn-info fw-bold add-group-btn-mb animated-btn"
                   >
                     Add Group
                   </button>
@@ -616,5 +617,33 @@
       }
       tryBindUserMenuBtn(20);
     </script>
+  <script>
+    // Dynamically load userMenuModal.js after supabaseClient.js is ready
+    (function loadUserMenuModalWhenReady() {
+      function injectScript() {
+        const script = document.createElement("script");
+        script.type = "module";
+        script.src = "../js/userMenuModal.js";
+        document.body.appendChild(script);
+      }
+      if (window.supabasePromise) {
+        injectScript();
+      } else {
+        let tries = 0;
+        const maxTries = 20;
+        const interval = setInterval(() => {
+          if (window.supabasePromise) {
+            clearInterval(interval);
+            injectScript();
+          } else if (++tries >= maxTries) {
+            clearInterval(interval);
+            console.error(
+              "userMenuModal.js: supabasePromise not found after waiting."
+            );
+          }
+        }, 100);
+      }
+    })();
+  </script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-console.log("[GroupsPage] groupsPage.js loaded");
+// ...existing code...
 // --- Caching Utilities ---
 function getCachedData(key) {
   try {
@@ -77,7 +77,8 @@ async function showMembersList() {
   }
   members.forEach((member) => {
     const li = document.createElement("li");
-    li.className = "list-group-item d-flex align-items-center";
+    li.className =
+      "list-group-item album-list-item redesigned-album-card d-flex align-items-center";
     let imageHtml = "";
     if (member.image) {
       imageHtml = `<img src="${member.image}" alt="Member Image" class="img-thumbnail me-2" style="max-width:40px;max-height:40px;">`;
@@ -143,15 +144,15 @@ let isRenderingGroups = false;
 async function loadAndRenderGroups() {
   if (isRenderingGroups) return;
   isRenderingGroups = true;
-  console.log("[GroupsPage] loadAndRenderGroups called");
+  // ...existing code...
   // Try cache first
   let groups = getCachedData("groups");
   let fetchedGroups = null;
   if (!Array.isArray(groups)) {
-    console.log("[GroupsPage] No valid cache, fetching groups from API...");
+    // ...existing code...
     try {
       groups = await fetchGroups();
-      console.log("[GroupsPage] Groups fetched from API:", groups);
+      // ...existing code...
     } catch (err) {
       console.error("[GroupsPage] Error fetching groups:", err);
       groups = [];
@@ -160,13 +161,11 @@ async function loadAndRenderGroups() {
     setCachedData("groups", groups);
     // groups is now up to date, continue to render below
   } else {
-    console.log("[GroupsPage] Using cached groups:", groups);
+    // ...existing code...
     // Fetch in background and update cache if changed
     fetchGroups().then((fresh) => {
       if (isDataDifferent(fresh, groups)) {
-        console.log(
-          "[GroupsPage] Cache is stale, updating cache with fresh groups."
-        );
+        // ...existing code...
         setCachedData("groups", fresh);
         // Do not trigger another reload here to avoid infinite loop
       }
@@ -205,48 +204,48 @@ async function loadAndRenderGroups() {
 
   pageGroups.forEach((group) => {
     const li = document.createElement("li");
-    li.className = "list-group-item d-flex align-items-center py-3";
+    li.className =
+      "list-group-item album-list-item redesigned-album-card d-flex align-items-center py-3";
     li.style.cursor = "pointer";
+    li.setAttribute("data-id", group.id);
+    // Card image
     let imageHtml = "";
     if (group.image) {
-      imageHtml = `<img src="${group.image}" alt="Group Image" class="img-thumbnail me-3" style="max-width:120px;max-height:120px;">`;
+      imageHtml = `<div class='album-card-img-wrap d-flex align-items-center justify-content-center' style='min-width:90px;max-width:120px;'>
+        <img src="${group.image}" alt="Group Image" class="album-card-img" style="max-width:90px;max-height:90px;border-radius:10px;object-fit:cover;box-shadow:0 2px 8px #232a3640;">
+      </div>`;
+    } else {
+      imageHtml = `<div class='album-card-img-wrap d-flex align-items-center justify-content-center' style='min-width:90px;max-width:120px;'>
+        <div class='album-card-img-placeholder' style='width:90px;height:90px;border-radius:10px;background:#191a22;'></div>
+      </div>`;
     }
-    // Add Remove button
-    li.innerHTML = `${imageHtml}<span class="flex-grow-1 fs-5">${group.name}</span>
-      <button class="btn btn-sm btn-warning ms-auto edit-group-btn" data-id="${group.id}">Edit</button>
-      <button class="btn btn-sm btn-danger ms-2 remove-group-btn" data-id="${group.id}">Remove</button>`;
-    li.setAttribute("data-id", group.id);
+    // Card main content
+    const mainHtml = `<div class='album-card-main flex-grow-1 px-2'>
+      <div class='album-card-title fw-bold mb-1' style='font-size:1.1em;'>${
+        group.name
+      }</div>
+      <div class='text-info small mb-1'>${group.notes ? group.notes : ""}</div>
+    </div>`;
+    // Card actions
+    const actionsHtml = `<div class='album-card-actions d-flex flex-row gap-2 ms-auto'>
+      <button class='btn btn-info edit-group-btn' data-id='${group.id}'>Edit</button>
+      <button class='btn btn-danger remove-group-btn' data-id='${group.id}'>×</button>
+    </div>`;
+    li.innerHTML = `${imageHtml}${mainHtml}${actionsHtml}`;
+
     // Edit button event
-    li.querySelector(".edit-group-btn").addEventListener(
-      "click",
-      async function (e) {
-        e.stopPropagation();
-        const groups = await fetchGroups();
-        const g = groups.find((gr) => gr.id == group.id);
-        if (g) {
-          editGroupName.value = g.name;
-          editGroupImage.value = g.image || "";
-          editGroupNotes.value = g.notes || "";
-          editingGroupId = g.id;
-          // Hide any open modals before showing
-          if (editGroupModal._isShown) {
-            editGroupModal.hide();
-            // Focus main add group button after hiding
-            setTimeout(() => {
-              const addBtn = document.querySelector(
-                'button[type="submit"].btn-info'
-              );
-              if (addBtn) addBtn.focus();
-              else document.body.focus();
-            }, 350);
-          }
-          editGroupModal.show();
-          setTimeout(() => {
-            editGroupName.focus();
-          }, 300);
-        }
-      }
-    );
+    li.querySelector(".edit-group-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      editingGroupId = group.id;
+      editGroupName.value = group.name;
+      editGroupImage.value = group.image || "";
+      editGroupNotes.value = group.notes || "";
+      // Show modal
+      editGroupModal.show();
+      setTimeout(() => {
+        editGroupName.focus();
+      }, 300);
+    });
     // Remove button event
     li.querySelector(".remove-group-btn").addEventListener(
       "click",
@@ -266,7 +265,6 @@ async function loadAndRenderGroups() {
         }
       }
     );
-    // Removed duplicate editGroupForm submit handler to avoid conflicts. Now handled in groupManagement.js only.
     // Group info event
     li.addEventListener("click", async function (e) {
       if (

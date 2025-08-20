@@ -49,7 +49,9 @@ export function showGroupInfoModal(group, members, albums, callbacks) {
                 ? `<img src='${album.image}' alt='Album Cover' class='img-thumbnail me-2' style='max-width:50px;max-height:50px;'>`
                 : ""
             }
-            <span><strong>${album.album}</strong> (${album.year})</span>
+            <span><strong>${album.album}</strong> (${
+              album.releaseDate || ""
+            })</span>
           </li>
         `
           )

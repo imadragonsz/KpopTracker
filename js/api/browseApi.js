@@ -27,13 +27,14 @@ export async function addAlbumToUser(albumId) {
     .from("albums")
     .select("user_id")
     .eq("id", albumId);
-  console.log("[addAlbumToUser] Fetched album:", albums, "Error:", fetchError);
+  // Removed unnecessary console.log statement
   if (!albums || !albums.length) {
     console.error("[addAlbumToUser] Album not found for id:", albumId);
     return { success: false, error: "Album not found" };
   }
   let userIds = albums[0].user_id || [];
   console.log("[addAlbumToUser] userIds before:", userIds, "user:", user.id);
+  // Removed unnecessary console.log statement
   if (!userIds.includes(user.id)) {
     userIds.push(user.id);
     const { error: updateError } = await supabase

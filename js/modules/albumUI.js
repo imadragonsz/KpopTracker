@@ -44,6 +44,7 @@ import { fetchUserAlbumVersionsBatch } from "../api/userAlbumVersionsApi.js";
 let userVersionsMap = {};
 let cacheKey = "user_album_versions";
 let albumList = document.getElementById("album-list");
+let lastRenderList = null;
 
 export async function renderAlbums(albumListArg) {
   albumList = document.getElementById("album-list");
@@ -81,8 +82,11 @@ export async function renderAlbums(albumListArg) {
     loadedFrom = "cache";
   }
 
-  // Render immediately with cached data (or empty if no cache)
-  const renderList = Array.isArray(albumListArg) ? albumListArg : albums;
+  // Always use the last filtered array for rendering
+  if (Array.isArray(albumListArg)) {
+    lastRenderList = albumListArg;
+  }
+  const renderList = Array.isArray(lastRenderList) ? lastRenderList : albums;
   let html = "";
   for (let i = 0; i < renderList.length; i++) {
     const item = renderList[i];
@@ -187,7 +191,7 @@ export async function renderAlbums(albumListArg) {
                 <span class="album-card-group">${item.group}</span>
                 <span class="album-card-sep">-</span>
                 <span class="album-card-name">${item.album}</span>
-                <span class="album-card-year">(${item.year})</span>
+                <span class="album-card-year">(${item.releaseDate || ""})</span>
               </div>
               <div class='version-list mb-2'>${
                 versionsHtml ||
@@ -222,7 +226,7 @@ export async function renderAlbums(albumListArg) {
         const album = albums.find((a) => String(a.id) === String(albumId));
         if (album) {
           album._versionPage = Math.max(1, (album._versionPage || 1) - 1);
-          renderAlbums();
+          renderAlbums(lastRenderList);
         }
       } else if (nextBtn) {
         e.stopPropagation();
@@ -235,7 +239,7 @@ export async function renderAlbums(albumListArg) {
             ),
             (album._versionPage || 1) + 1
           );
-          renderAlbums();
+          renderAlbums(lastRenderList);
         }
       }
     });
@@ -260,7 +264,7 @@ export async function renderAlbums(albumListArg) {
         setTimeout(() => {
           renderAlbums._rerendered = 0;
         }, 1000);
-        await renderAlbums();
+        await renderAlbums(lastRenderList);
       }
     }
   });

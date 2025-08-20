@@ -129,13 +129,13 @@ document.addEventListener("click", function (e) {
 document.addEventListener("click", async function (e) {
   const removeBtn = e.target.closest(".remove-btn");
   if (removeBtn) {
-    console.log("[DEBUG] Remove button clicked", removeBtn);
+    // ...existing code...
     const albumId = removeBtn.getAttribute("data-id");
     if (!albumId) return;
     if (!confirm("Are you sure you want to remove this album?")) return;
     try {
       const { deleteAlbum } = await import("../api/albumApi.js");
-      console.log("[DEBUG] Calling deleteAlbum for id", albumId);
+      // ...existing code...
       await deleteAlbum(albumId);
       const { loadAndRenderAlbums } = await import("./albumLoader.js");
       loadAndRenderAlbums();
@@ -153,7 +153,7 @@ document.addEventListener("submit", async function (e) {
     e.preventDefault();
     const groupSelect = document.getElementById("groupSelect");
     const albumInput = document.getElementById("album");
-    const yearSelect = document.getElementById("year");
+    const releaseDateInput = document.getElementById("releaseDate");
     const albumImage = document.getElementById("albumImage"); // now hidden input set by upload
     const onTheWay = document.getElementById("onTheWay");
     const albumVersionsList = document.getElementById("albumVersionsList");
@@ -163,7 +163,7 @@ document.addEventListener("submit", async function (e) {
         ? albumVersionsList._versionsArr
         : [];
     // Validate required fields
-    if (!groupSelect.value || !albumInput.value || !yearSelect.value) {
+    if (!groupSelect.value || !albumInput.value || !releaseDateInput.value) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -173,7 +173,7 @@ document.addEventListener("submit", async function (e) {
       await addAlbum({
         group: groupSelect.value,
         album: albumInput.value,
-        year: yearSelect.value,
+        releaseDate: releaseDateInput.value,
         image: albumImage.value,
         onTheWay: onTheWay && onTheWay.checked,
         versions: versionsArr,
@@ -237,12 +237,12 @@ export function setupAlbumEventHandlers() {
       // Populate modal fields
       const editGroup = document.getElementById("editGroup");
       const editAlbum = document.getElementById("editAlbum");
-      const editYear = document.getElementById("editYear");
+      const editReleaseDate = document.getElementById("editReleaseDate");
       const editImage = document.getElementById("editImage");
       const editOnTheWay = document.getElementById("editOnTheWay");
       if (editGroup) editGroup.value = album.group;
       if (editAlbum) editAlbum.value = album.album;
-      if (editYear) editYear.value = album.year;
+      if (editReleaseDate) editReleaseDate.value = album.releaseDate;
       if (editImage) editImage.value = album.image || "";
       if (editOnTheWay) editOnTheWay.checked = !!album.onTheWay;
       // Show versions in modal and store in persistent array for this session
@@ -330,7 +330,7 @@ export function setupAlbumEventHandlers() {
             await updateAlbum(album.id, {
               group: album.group,
               album: album.album,
-              year: album.year,
+              releaseDate: album.releaseDate,
               image: album.image,
               onTheWay: album.onTheWay,
               versions: versionsArr,
@@ -359,7 +359,7 @@ export function setupAlbumEventHandlers() {
       e.preventDefault();
       const editGroup = document.getElementById("editGroup");
       const editAlbum = document.getElementById("editAlbum");
-      const editYear = document.getElementById("editYear");
+      const editReleaseDate = document.getElementById("editReleaseDate");
       const editImage = document.getElementById("editImage");
       const editOnTheWay = document.getElementById("editOnTheWay");
       const editVersionsList = document.getElementById("editVersionsList");
@@ -371,12 +371,12 @@ export function setupAlbumEventHandlers() {
       if (albumId) {
         album = albums.find((a) => String(a.id) === String(albumId));
       } else {
-        // fallback: try to find by group/album/year
+        // fallback: try to find by group/album/releaseDate
         album = albums.find(
           (a) =>
             a.group === editGroup.value &&
             a.album === editAlbum.value &&
-            String(a.year) === String(editYear.value)
+            String(a.releaseDate) === String(editReleaseDate.value)
         );
       }
       if (!album) return;
@@ -391,7 +391,7 @@ export function setupAlbumEventHandlers() {
         await updateAlbum(album.id, {
           group: editGroup.value,
           album: editAlbum.value,
-          year: editYear.value,
+          releaseDate: editReleaseDate.value,
           image: editImage.value,
           onTheWay: editOnTheWay && editOnTheWay.checked,
           versions: versionsArr,

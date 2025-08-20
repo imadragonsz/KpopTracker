@@ -1,8 +1,55 @@
-.album-filter-row .album-count-align {
-  align-self: center !important;
+.album-filter-flex {
   display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  justify-content: flex-start !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  scroll-padding-left: 0.5rem !important;
+  scroll-padding-right: 0.5rem !important;
+  position: relative !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  gap: 0.5rem !important;
+}
+.album-filter-flex > .col-auto,
+.album-filter-flex > * {
+  display: inline-flex !important;
+  flex: 0 0 auto !important;
+  min-width: 110px !important;
+  max-width: 200px !important;
   align-items: center !important;
-  height: 40px !important;
-  min-width: 90px;
-  justify-content: center;
+  justify-content: center !important;
+  margin-right: 0 !important;
+}
+
+/* Make filter fields fill their container and prevent text cutoff */
+.album-filter-flex .form-control,
+.album-filter-flex .form-select {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding-left: 1em !important;
+  padding-right: 1em !important;
+  font-size: 1em !important;
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+.album-filter-flex > .col-auto:last-child,
+.album-filter-flex > *:last-child {
+  margin-right: 0 !important;
+}
+@media (max-width: 600px) {
+  .album-filter-flex > .col-auto,
+  .album-filter-flex > * {
+    min-width: 90px !important;
+    max-width: 140px !important;
+    font-size: 0.98em !important;
+  }
 }

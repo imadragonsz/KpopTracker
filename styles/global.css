@@ -1,3 +1,48 @@
+@media (max-width: 576px) {
+  #groupList .list-group-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5em;
+  }
+  #groupList .edit-group-btn,
+  #groupList .remove-group-btn {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 0.3em;
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+@media (max-width: 576px) {
+  .container,
+  .container-fluid {
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    /* Do NOT set overflow-x: auto here, it breaks navbar collapse */
+  }
+  .row,
+  [class^="col-"] {
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-x: auto !important;
+  }
+  table {
+    width: 100% !important;
+    max-width: 100vw !important;
+    display: block;
+    overflow-x: auto;
+  }
+  th,
+  td {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+}
 /* Flex child for sticky footer layout */
 .main-content {
   flex: 1 0 auto;
@@ -56,7 +101,7 @@ body {
   background: #232946 !important;
   border-radius: 18px !important;
   box-shadow: 0 2px 16px 0 #232a3633;
-  max-width: 900px;
+  max-width: 80%;
   width: 100%;
   margin-top: 90px;
   margin-bottom: 2.5rem !important;
@@ -113,26 +158,29 @@ body {
   padding: 0.5rem 0.5rem 0.5rem 0.5rem;
   border: 1.5px solid #43c6ac;
 }
-#groupList .list-group-item {
-  background: #232946 !important;
-  color: #eaeaea !important;
-  border: 1.5px solid #35343a !important;
-  border-radius: 12px !important;
+/* #groupList .list-group-item {
+  background: #232946;
+  color: #eaeaea;
+  border: 1.5px solid #35343a;
+  border-radius: 12px;
   margin-bottom: 0.75rem;
   box-shadow: 0 1px 6px 0 #232a3620;
   transition: box-shadow 0.2s, border 0.2s;
-}
+} */
 #groupList .list-group-item:hover {
   border: 1.5px solid #43c6ac !important;
   box-shadow: 0 2px 12px 0 #43c6ac33;
   background: #232a36 !important;
 }
 #groupList .img-thumbnail {
-  background: #181a20 !important;
+  background: transparent !important;
   border: 1.5px solid #43c6ac !important;
   border-radius: 10px !important;
-  max-width: 60px;
-  max-height: 60px;
+  width: 128px;
+  height: 128px;
+  max-width: 128px;
+  max-height: 128px;
+  object-fit: contain;
   margin-right: 1rem;
 }
 #groupList .edit-group-btn {
