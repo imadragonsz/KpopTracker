@@ -1,33 +1,41 @@
-window.__groupManagementLoaded = true;
-console.log("[GroupMgmt] groupManagement.js loaded");
-// Attach submit handler for edit group modal form
-// Attach submit handler for edit group modal form
-document.addEventListener("DOMContentLoaded", function () {
-  const editGroupForm = document.getElementById("editGroupForm");
-  if (editGroupForm) {
-    editGroupForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const name = document.getElementById("editGroupName").value.trim();
-      const image = document.getElementById("editGroupImage").value.trim();
-      const notes = document.getElementById("editGroupNotes").value.trim();
-      const groupId = window.editingGroupId;
-      if (!groupId || !name) return;
-      await window.updateGroup(groupId, name, image, notes);
-      // Hide modal after save
-      const modalEl = document.getElementById("editGroupModal");
-      if (modalEl && window.bootstrap && window.bootstrap.Modal) {
-        const editGroupModal =
-          window.bootstrap.Modal.getOrCreateInstance(modalEl);
-        editGroupModal.hide();
-      }
-      // Refresh group list
-      await loadUserGroupsForManagement();
-    });
+// --- Caching Utilities ---
+function getCachedData(key) {
+  try {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+    return JSON.parse(cached);
+  } catch {
+    return null;
   }
-});
-// groupManagement.js
-// Use fetchGroups to load only the user's groups and log for debugging
+}
+function setCachedData(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch {}
+}
+function isDataDifferent(a, b) {
+  return JSON.stringify(a) !== JSON.stringify(b);
+}
 
+// --- Modal Utility Functions ---
+function showModalById(id) {
+  const modalEl = document.getElementById(id);
+  if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+    const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+    return modal;
+  }
+}
+function hideModalById(id) {
+  const modalEl = document.getElementById(id);
+  if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+    const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.hide();
+    return modal;
+  }
+}
+
+// --- Imports & Globals ---
 import { fetchGroups, updateGroup } from "../api/groupApi.js";
 import { getCurrentUser } from "../auth.js";
 import { removeUserFromGroup } from "../api/groupApi.js";
@@ -36,101 +44,79 @@ import { fetchAlbums } from "../api/albumApi.js";
 import { fetchMembersByGroup } from "../api/memberApi.js";
 import { showMemberInfoModal } from "../components/memberModals.js";
 import { updateMember } from "../api/memberApi.js";
-
-// Expose updateGroup globally for modal/gallery integration
 window.updateGroup = updateGroup;
 
+// --- Pagination and Sorting ---
+let currentGroupPage = 1;
+const GROUPS_PER_PAGE = 10;
+
+// --- Render Groups ---
 function renderGroups(groups) {
   const groupList = document.getElementById("groupList");
   groupList.innerHTML = "";
+  // Sorting
+  const groupSortSelect = document.getElementById("groupSortSelect");
+  if (groupSortSelect) {
+    const sortValue = groupSortSelect.value;
+    groups = groups.slice();
+    if (sortValue === "az") groups.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortValue === "za")
+      groups.sort((a, b) => b.name.localeCompare(a.name));
+  }
   // Update group count
   const groupCountElem = document.getElementById("groupCount");
   if (groupCountElem) {
     groupCountElem.innerHTML = `<i class="bi bi-people-fill me-1"></i> ${groups.length}`;
   }
-  groups.forEach((group) => {
+  // Pagination
+  const totalPages = Math.ceil(groups.length / GROUPS_PER_PAGE);
+  if (currentGroupPage > totalPages) currentGroupPage = totalPages || 1;
+  const startIdx = (currentGroupPage - 1) * GROUPS_PER_PAGE;
+  const endIdx = startIdx + GROUPS_PER_PAGE;
+  const pageGroups = groups.slice(startIdx, endIdx);
+
+  pageGroups.forEach((group) => {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex align-items-center py-3";
     li.style.cursor = "pointer";
-    let imageHtml = "";
-    if (group.image) {
-      imageHtml = `<img src="${group.image}" alt="Group Image" class="img-thumbnail me-3" style="max-width:120px;max-height:120px;">`;
-    } else {
-      imageHtml = `<img src="/assets/images/default-group.png" alt="Group Image" class="img-thumbnail me-3" style="max-width:120px;max-height:120px;">`;
-    }
+    let imageHtml = group.image
+      ? `<img src="${group.image}" alt="Group Image" class="img-thumbnail me-3" style="max-width:120px;max-height:120px;">`
+      : `<img src="/assets/images/default-group.png" alt="Group Image" class="img-thumbnail me-3" style="max-width:120px;max-height:120px;">`;
     li.innerHTML = `${imageHtml}<span class="flex-grow-1 fs-5">${group.name}</span>
       <button class="btn btn-sm btn-warning ms-auto edit-group-btn" data-id="${group.id}">Edit</button>
       <button class="btn btn-sm btn-danger ms-2 remove-group-btn" data-id="${group.id}">Remove</button>`;
     li.setAttribute("data-id", group.id);
+
     // Card click event to open group info modal
     li.addEventListener("click", async function (e) {
       if (
         e.target.classList.contains("edit-group-btn") ||
         e.target.classList.contains("remove-group-btn")
-      ) {
+      )
         return;
-      }
-      // Fetch group, members, and albums data
       const [members, albums] = await Promise.all([
         fetchMembersByGroup(group.id),
         fetchAlbums(),
       ]);
       const groupAlbums = albums.filter((a) => a.group === group.name);
       showGroupInfoModal(group, members, groupAlbums, {
-        onShow: () => {
-          const modalEl = document.getElementById("groupInfoModal");
-          if (modalEl && window.bootstrap && window.bootstrap.Modal) {
-            const groupInfoModal =
-              window.bootstrap.Modal.getOrCreateInstance(modalEl);
-            groupInfoModal.show();
-          }
-        },
+        onShow: () => showModalById("groupInfoModal"),
         onManageMembers: () => {
-          // Hide group info modal, then show manage members modal and list
-          const groupInfoModalEl = document.getElementById("groupInfoModal");
-          if (groupInfoModalEl && window.bootstrap && window.bootstrap.Modal) {
-            const groupInfoModal =
-              window.bootstrap.Modal.getOrCreateInstance(groupInfoModalEl);
-            groupInfoModal.hide();
-          }
+          hideModalById("groupInfoModal");
           setTimeout(() => {
-            // Set current group id for member management
             window.currentGroupId = group.id;
-            // Show members list if function exists
-            if (typeof window.showMembersList === "function") {
+            if (typeof window.showMembersList === "function")
               window.showMembersList();
-            }
-            // Show manage members modal
-            const manageMembersModalEl =
-              document.getElementById("manageMembersModal");
-            if (
-              manageMembersModalEl &&
-              window.bootstrap &&
-              window.bootstrap.Modal
-            ) {
-              const manageMembersModal =
-                window.bootstrap.Modal.getOrCreateInstance(
-                  manageMembersModalEl
-                );
-              manageMembersModal.show();
-            }
+            showModalById("manageMembersModal");
           }, 300);
         },
         onManageMembers: () => {
-          // Hide group info modal, then show member management modal
-          const groupInfoModalEl = document.getElementById("groupInfoModal");
-          if (groupInfoModalEl && window.bootstrap && window.bootstrap.Modal) {
-            const groupInfoModal =
-              window.bootstrap.Modal.getOrCreateInstance(groupInfoModalEl);
-            groupInfoModal.hide();
-          }
+          hideModalById("groupInfoModal");
           setTimeout(() => {
-            // Use showMemberManagementModal for member management
             if (typeof window.showMemberManagementModal === "function") {
               window.showMemberManagementModal(
                 members,
                 async (updatedMember) => {
-                  // Find the member being edited by name (or add an id field to the form for more robust matching)
                   const memberToEdit = members.find(
                     (m) => m.name === updatedMember.name
                   );
@@ -143,7 +129,6 @@ function renderGroups(groups) {
                       updatedMember.birthday,
                       updatedMember.height
                     );
-                    // Refresh members list after update
                     const refreshedMembers = await fetchMembersByGroup(
                       group.id
                     );
@@ -157,24 +142,20 @@ function renderGroups(groups) {
         },
         onAlbumClick: () => {},
         onMemberClick: (memberId) => {
-          const member = members.find((m) => m.id == memberId);
-          if (member) {
-            showMemberInfoModal(member);
-            const modalEl = document.getElementById("memberInfoModal");
-            if (modalEl && window.bootstrap && window.bootstrap.Modal) {
-              const memberInfoModal =
-                window.bootstrap.Modal.getOrCreateInstance(modalEl);
-              memberInfoModal.show();
-            }
-          }
+          const member = members.find(
+            (m) => m.id == memberId || m.id == +memberId
+          );
+          if (member) showMemberInfoModal(member);
+          else
+            console.warn("[onMemberClick] Member not found for id:", memberId);
         },
       });
     });
+
     // Edit button event
     li.querySelector(".edit-group-btn").addEventListener(
       "click",
       async function (e) {
-        console.log("[Edit Modal] Edit button clicked for group:", group.id);
         e.stopPropagation();
         const groups = await fetchGroups();
         const g = groups.find((gr) => gr.id == group.id);
@@ -187,34 +168,13 @@ function renderGroups(groups) {
             editGroupImage.value = g.image || "";
             editGroupNotes.value = g.notes || "";
             window.editingGroupId = g.id;
-            const modalEl = document.getElementById("editGroupModal");
-            console.log(
-              "[Edit Modal] modalEl:",
-              modalEl,
-              "Bootstrap:",
-              window.bootstrap
-            );
-            if (modalEl && window.bootstrap && window.bootstrap.Modal) {
-              const editGroupModal =
-                window.bootstrap.Modal.getOrCreateInstance(modalEl);
-              editGroupModal.show();
-              setTimeout(() => {
-                editGroupName.focus();
-              }, 300);
-              console.log("[Edit Modal] Modal should now be shown.");
-            } else {
-              console.warn(
-                "[Edit Modal] Modal element or Bootstrap not found."
-              );
-            }
-          } else {
-            console.warn("[Edit Modal] One or more form fields missing.");
+            showModalById("editGroupModal");
+            setTimeout(() => editGroupName.focus(), 300);
           }
-        } else {
-          console.warn("[Edit Modal] Group not found for id:", group.id);
         }
       }
     );
+
     // Remove button event
     li.querySelector(".remove-group-btn").addEventListener(
       "click",
@@ -234,32 +194,143 @@ function renderGroups(groups) {
         }
       }
     );
+
     groupList.appendChild(li);
   });
+
+  // Pagination controls
+  const paginationDiv =
+    document.getElementById("groupPagination") || document.createElement("div");
+  paginationDiv.id = "groupPagination";
+  paginationDiv.className =
+    "d-flex justify-content-center align-items-center mt-3";
+  paginationDiv.innerHTML = "";
+  if (totalPages > 1) {
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "btn btn-secondary me-2";
+    prevBtn.textContent = "Previous";
+    prevBtn.disabled = currentGroupPage === 1;
+    prevBtn.onclick = () => {
+      currentGroupPage--;
+      loadUserGroupsForManagement();
+    };
+    paginationDiv.appendChild(prevBtn);
+
+    const pageInfo = document.createElement("span");
+    pageInfo.textContent = `Page ${currentGroupPage} of ${totalPages}`;
+    pageInfo.className = "mx-2";
+    paginationDiv.appendChild(pageInfo);
+
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "btn btn-secondary ms-2";
+    nextBtn.textContent = "Next";
+    nextBtn.disabled = currentGroupPage === totalPages;
+    nextBtn.onclick = () => {
+      currentGroupPage++;
+      loadUserGroupsForManagement();
+    };
+    paginationDiv.appendChild(nextBtn);
+  }
+  if (!document.getElementById("groupPagination")) {
+    groupList.parentNode.appendChild(paginationDiv);
+  }
 }
 
+// --- Load Groups ---
 async function loadUserGroupsForManagement() {
   try {
     const user = await getCurrentUser();
-    console.debug("[GroupMgmt] Current user:", user);
     if (!user) {
-      console.warn("[GroupMgmt] No user found, not loading groups.");
       renderGroups([]);
       return;
     }
-    const groups = await fetchGroups();
-    console.debug("[GroupMgmt] Groups fetched:", groups);
+    let groups = getCachedData("groups");
+    if (!Array.isArray(groups)) {
+      try {
+        groups = await fetchGroups();
+      } catch {
+        groups = [];
+      }
+      if (!Array.isArray(groups)) groups = [];
+      setCachedData("groups", groups);
+    } else {
+      fetchGroups().then((fresh) => {
+        if (isDataDifferent(fresh, groups)) setCachedData("groups", fresh);
+      });
+    }
     renderGroups(groups);
-  } catch (err) {
-    console.error("[GroupMgmt] Error loading groups:", err);
+  } catch {
     renderGroups([]);
   }
 }
 
-// Initial load
-loadUserGroupsForManagement();
+// --- Edit Group Modal Submit Handler ---
+document.addEventListener("DOMContentLoaded", function () {
+  const editGroupForm = document.getElementById("editGroupForm");
+  if (editGroupForm) {
+    editGroupForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const name = document.getElementById("editGroupName").value.trim();
+      const image = document.getElementById("editGroupImage").value.trim();
+      const notes = document.getElementById("editGroupNotes").value.trim();
+      const groupId = window.editingGroupId;
+      if (!groupId || !name) return;
+      await window.updateGroup(groupId, name, image, notes);
+      hideModalById("editGroupModal");
+      await loadUserGroupsForManagement();
+    });
+  }
+});
 
-// Still listen for album-removed if needed
+// --- Initial Load ---
+document.addEventListener("DOMContentLoaded", () => {
+  const groupSortSelect = document.getElementById("groupSortSelect");
+  if (groupSortSelect) {
+    groupSortSelect.addEventListener("change", loadUserGroupsForManagement);
+  }
+
+  // Add search functionality
+  const searchInput = document.getElementById("searchGroupInput");
+  let allGroups = [];
+  async function fetchAndRenderGroups() {
+    const user = await getCurrentUser();
+    if (!user) {
+      renderGroups([]);
+      return;
+    }
+    let groups = getCachedData("groups");
+    if (!Array.isArray(groups)) {
+      try {
+        groups = await fetchGroups();
+      } catch {
+        groups = [];
+      }
+      if (!Array.isArray(groups)) groups = [];
+      setCachedData("groups", groups);
+    } else {
+      fetchGroups().then((fresh) => {
+        if (isDataDifferent(fresh, groups)) setCachedData("groups", fresh);
+      });
+    }
+    allGroups = groups;
+    renderGroups(groups);
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+      const value = searchInput.value.trim().toLowerCase();
+      const filtered = allGroups.filter((g) =>
+        g.name.toLowerCase().includes(value)
+      );
+      renderGroups(filtered);
+    });
+  }
+
+  // Initial load
+  fetchAndRenderGroups();
+});
+
+// --- Album Removed Event (if needed) ---
 import { loadAndRenderAlbums } from "../modules/albumLoader.js";
 document.addEventListener("album-removed", () => {
   loadAndRenderAlbums();

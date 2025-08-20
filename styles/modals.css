@@ -1,3 +1,15 @@
+/* Remove Bootstrap modal fade overlay */
+.modal-backdrop {
+  display: none !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+/* Safety net: Hide all modals unless .show is present */
+.modal:not(.show) {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 /* Transparent background for member list items in member management modal */
 .list-group-item.d-flex.align-items-center.member-list-item {
   background-color: transparent !important;
@@ -10,34 +22,51 @@
 .modal-dialog {
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
   color: #f4f4f4;
-  border-radius: 16px;
   /* box-shadow: 0 2px 12px 0 #00000022; */
 }
+/* Modal stacking fix */
 .modal {
-  padding-top: 40px !important;
-  padding-bottom: 20px !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   overflow-y: auto;
+  z-index: 1050;
+}
+
+/* Ensure modal dialog and content are always above the fade */
+/* Remove custom z-index and position rules to restore Bootstrap's defaults */
+.modal-dialog {
+  position: static;
+}
+.modal-content {
+  position: static;
+}
+.modal.show {
+  display: block;
 }
 .modal-dialog {
-  margin: 40px auto 10px auto !important;
+  position: static;
+  margin: 6.5rem auto 1.5rem auto;
   max-width: min(98vw, 500px);
   width: 100%;
-  max-height: calc(100vh - 155px);
-  display: block;
-  display: flex;
-  align-items: center;
-  min-height: 100vh;
-  justify-content: center;
+  max-height: calc(100vh - 4rem);
+  min-height: unset;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 .modal-content {
   border-radius: clamp(12px, 2vw, 24px) !important;
   padding: 0 !important;
-  max-height: calc(100vh - 175px) !important;
+  max-height: calc(100vh - 8vh - 32px) !important;
   overflow-y: auto !important;
   box-sizing: border-box;
   background: #232226 !important;
   color: #f4f4f4 !important;
-  border-radius: 16px;
   border: 1.5px solid #35343a !important;
   box-shadow: 0 2px 12px 0 #00000022;
 }
@@ -49,32 +78,24 @@
 }
 @media (max-width: 991.98px) {
   .modal-dialog {
-    margin: 40px auto 3px auto !important;
     max-width: 99vw;
   }
 }
 @media (max-width: 575.98px) {
   .modal-dialog {
-    margin: 24px auto 2px auto !important;
     max-width: 100vw;
   }
   .modal-content {
-    max-height: calc(100vh - 175px) !important;
-  }
-  .modal {
-    padding-top: 145px !important;
-    padding-bottom: 10px !important;
+    max-height: calc(100vh - 8vh - 16px) !important;
   }
 }
-.modal.fade .modal-dialog {
-  margin: 0 auto;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  position: fixed;
-  pointer-events: none;
-}
+/* Ensure pointer events and stacking for visible modals */
+.modal.fade:not(.show) .modal-dialog,
 .modal.show .modal-dialog {
   pointer-events: auto;
+  z-index: 1060;
+}
+#modal-backdrop.fade.show {
+  display: block;
+  opacity: 0.5;
 }

@@ -3,36 +3,55 @@ import { showGalleryModal } from "./galleryModal.js";
 window.showMemberManagementModal = showMemberManagementModal;
 export function showMemberInfoModal(member) {
   const memberInfoBody = document.getElementById("memberInfoBody");
+  const modalEl = document.getElementById("memberInfoModal");
+  if (!memberInfoBody || !modalEl) return;
   let memberHtml = "";
-  if (member.image) {
-    memberHtml += `<img src='${member.image}' alt='Member Image' class='img-thumbnail mb-3' style='max-width:160px;max-height:160px;display:block;margin:auto;'>`;
-  }
-  const displayName = member.name.replace(/\b\w/g, (c) => c.toUpperCase());
-  memberHtml += `<h4 class='text-center mb-2'>${displayName}</h4>`;
-  // Age calculation
-  if (member.birthday) {
-    const birthDate = new Date(member.birthday);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+  if (!member) {
+    memberHtml = `<div class='text-center text-danger'>Member info not available.</div>`;
+  } else {
+    if (member.image) {
+      memberHtml += `<img src='${member.image}' alt='Member Image' class='img-thumbnail mb-3' style='max-width:160px;max-height:160px;display:block;margin:auto;'>`;
     }
-    memberHtml += `<div class='mb-2 text-center'><span class='fw-bold'>Age:</span> ${age} (Born: ${birthDate.toLocaleDateString()})</div>`;
-  }
-  if (member.height) {
-    memberHtml += `<div class='mb-2 text-center'><span class='fw-bold'>Height:</span> ${member.height} cm</div>`;
-  }
-  if (member.info) {
-    memberHtml += `<div class='mb-2 text-center'><span class='fw-bold'>Info:</span> ${member.info}</div>`;
+    const displayName = member.name
+      ? member.name.replace(/\b\w/g, (c) => c.toUpperCase())
+      : "";
+    memberHtml += `<h4 class='text-center mb-2'>${displayName}</h4>`;
+    // Age calculation
+    if (member.birthday) {
+      const birthDate = new Date(member.birthday);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      memberHtml += `<div class='mb-2 text-center'><span class='fw-bold'>Age:</span> ${age} (Born: ${birthDate.toLocaleDateString()})</div>`;
+    }
+    if (member.height) {
+      memberHtml += `<div class='mb-2 text-center'><span class='fw-bold'>Height:</span> ${member.height} cm</div>`;
+    }
+    if (member.info) {
+      memberHtml += `<div class='mb-2 text-center'><span class='fw-bold'>Info:</span> ${member.info}</div>`;
+    }
   }
   memberInfoBody.innerHTML = memberHtml;
-  // Always show the modal after filling content
-  const modalEl = document.getElementById("memberInfoModal");
-  if (modalEl && window.bootstrap && window.bootstrap.Modal) {
-    const memberInfoModal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
-    memberInfoModal.show();
+  // Hide group info modal if open
+  const groupInfoModalEl = document.getElementById("groupInfoModal");
+  if (groupInfoModalEl && window.bootstrap && window.bootstrap.Modal) {
+    const groupInfoModal =
+      window.bootstrap.Modal.getOrCreateInstance(groupInfoModalEl);
+    groupInfoModal.hide();
   }
+  // Show the member info modal after a short delay to avoid stacking issues
+  setTimeout(() => {
+    if (window.bootstrap && window.bootstrap.Modal) {
+      const memberInfoModal =
+        window.bootstrap.Modal.getOrCreateInstance(modalEl);
+      memberInfoModal.show();
+      // Accessibility: focus modal
+      modalEl.focus && modalEl.focus();
+    }
+  }, 150);
 }
 
 export function showMemberManagementModal(members = [], onSave) {

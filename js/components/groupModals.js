@@ -1,3 +1,4 @@
+import { showAlbumInfoModal } from "./albumModals.js";
 let currentGroupAlbumsPage = 1;
 const GROUP_ALBUMS_PER_PAGE = 10;
 
@@ -80,15 +81,39 @@ export function showGroupInfoModal(group, members, albums, callbacks) {
     document.querySelectorAll(".album-list-item").forEach((item) => {
       item.onclick = function () {
         const albumId = this.getAttribute("data-album-id");
-        callbacks.onAlbumClick(albumId);
+        const album = albums.find((a) => String(a.id) === String(albumId));
+        if (album) {
+          showAlbumInfoModal(album);
+        } else if (callbacks && typeof callbacks.onAlbumClick === "function") {
+          callbacks.onAlbumClick(albumId);
+        }
       };
     });
-    document.querySelectorAll(".member-badge").forEach((item) => {
-      item.onclick = function () {
-        const memberId = this.getAttribute("data-member-id");
-        callbacks.onMemberClick(memberId);
-      };
-    });
+    // Event delegation for member-badge clicks
+    if (!groupInfoBody._memberBadgeDelegation) {
+      groupInfoBody.addEventListener("click", function (event) {
+        const badge = event.target.closest(".member-badge");
+        if (badge) {
+          event.stopPropagation();
+          if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+          const memberId = badge.getAttribute("data-member-id");
+          console.log(
+            "[GMODALS .member-badge DELEGATED handler] memberId:",
+            memberId,
+            "callbacks:",
+            callbacks
+          );
+          callbacks.onMemberClick(memberId);
+        }
+      });
+      groupInfoBody._memberBadgeDelegation = true;
+      console.log(
+        "[GMODALS] Delegation handler attached to groupInfoBody:",
+        groupInfoBody,
+        "Current HTML:",
+        groupInfoBody.innerHTML
+      );
+    }
     // Pagination button events
     const prevBtn = document.getElementById("groupAlbumsPrevBtn");
     const nextBtn = document.getElementById("groupAlbumsNextBtn");

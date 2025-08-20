@@ -6,7 +6,6 @@
   border: 2px solid #43c6ac !important;
   border-radius: 16px !important;
   box-shadow: 0 2px 16px 0 #43c6ac33 !important;
-  margin-bottom: 1.5em !important;
   margin-top: 0.5em !important;
   transition: box-shadow 0.2s, border-color 0.2s, background 0.2s;
 }

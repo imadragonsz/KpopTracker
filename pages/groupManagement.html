@@ -1,25 +1,27 @@
-    <!-- Member Management Modal for add/edit member -->
-    <div class="modal fade" id="memberManagementModal" tabindex="-1" aria-labelledby="memberManagementModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content bg-dark text-light">
-          <div class="modal-header">
-            <h5 class="modal-title" id="memberManagementModalLabel">Member Management</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <!-- Dynamic form will be injected here by showMemberManagementModal -->
-          </div>
-        </div>
-      </div>
-    </div>
-<script type="module" src="../js/pages/groupManagement.js"></script>
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Group & Member Management</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
     />
+    <link rel="stylesheet" href="../styles/global.css" />
+    <link rel="stylesheet" href="../styles/navbar.css" />
+    <link rel="stylesheet" href="../styles/album-cards.css" />
+    <link rel="stylesheet" href="../styles/modals.css" />
+    <link rel="stylesheet" href="../styles/forms.css" />
+    <link rel="stylesheet" href="../styles/loading.css" />
+    <link rel="stylesheet" href="../styles/albumCollectionOverrides.css" />
+    <link rel="stylesheet" href="../styles/albumCollectionRowOverrides.css" />
+    <link rel="stylesheet" href="/styles/animations.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <style>
       .hero-section h1,
       .hero-section p {
@@ -35,203 +37,228 @@
         }
       }
     </style>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Group & Member Management</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-  <link rel="stylesheet" href="../styles/global.css" />
-  <link rel="stylesheet" href="../styles/navbar.css" />
-  <link rel="stylesheet" href="../styles/album-cards.css" />
-  <link rel="stylesheet" href="../styles/modals.css" />
-  <link rel="stylesheet" href="../styles/forms.css" />
-  <link rel="stylesheet" href="../styles/loading.css" />
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <link rel="stylesheet" href="/styles/animations.css" />
   </head>
-  <body class="profile-bg">
+  <body
+    class="profile-bg"
+    style="display: flex; flex-direction: column; min-height: 100vh"
+  >
     <div id="navbar-include"></div>
     <script>
-    (async function loadNavbarAndScripts() {
-      const navbarDiv = document.getElementById("navbar-include");
-      if (navbarDiv.dataset.loaded) return;
-
-      // Fetch and inject navbar HTML
-      const html = await fetch("./components/navbar.html").then(res => res.text());
-
-  navbarDiv.innerHTML = html;
-  navbarDiv.dataset.loaded = "true";
-
-  // Dynamically load navbar.js after injection
-  const script = document.createElement('script');
-  script.type = 'module';
-  script.src = '../js/navbar.js';
-  document.body.appendChild(script);
-
-      // Wait for userMenuModal.js to be loaded, then bind userMenuBtn
-      function waitForUserMenuModal(retries) {
-        if (window.tryBindUserMenuBtn) {
-          window.tryBindUserMenuBtn(20);
-        } else if (retries > 0) {
-          setTimeout(() => waitForUserMenuModal(retries - 1), 200);
-        }
-      }
-      waitForUserMenuModal(20);
-
-      // Load Supabase and Bootstrap if not already loaded
-      const loadScript = (src, type = "text/javascript") => new Promise((resolve, reject) => {
-        if ([...document.scripts].some(s => s.src.includes(src))) return resolve();
-        const s = document.createElement("script");
-        s.src = src;
-        s.type = type;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.body.appendChild(s);
-      });
-
-      await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js");
-      await loadScript("https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js");
-
-      // Load your app scripts (as modules if needed)
-      const appScripts = [
-        '../js/components/loading.js',
-        '../js/authUI.js',
-        '../js/api/supabaseClient.js',
-        '../js/api/groupApi.js',
-        '../js/api/albumApi.js',
-        '../js/pages/groupManagement.js'
-      ];
-      for (const src of appScripts) {
-        await loadScript(src, "module");
-      }
-
-      // Wait for updateAuthUIReady before running dependent code
-      window.addEventListener("updateAuthUIReady", () => {
-        if (typeof window.updateAuthUI === "function") window.updateAuthUI();
-      }, { once: true });
-    })();
+      (async function loadNavbarAndScripts() {
+        const navbarDiv = document.getElementById("navbar-include");
+        if (navbarDiv.dataset.loaded) return;
+        // Fetch and inject navbar HTML
+        const html = await fetch("./components/navbar.html").then((res) =>
+          res.text()
+        );
+        navbarDiv.innerHTML = html;
+        navbarDiv.dataset.loaded = "true";
+        // Dynamically load navbar.js after injection
+        const script = document.createElement("script");
+        script.type = "module";
+        script.src = "../js/navbar.js";
+        document.body.appendChild(script);
+        // Load Supabase and Bootstrap if not already loaded
+        const loadScript = (src, type = "text/javascript") =>
+          new Promise((resolve, reject) => {
+            if ([...document.scripts].some((s) => s.src.includes(src)))
+              return resolve();
+            const s = document.createElement("script");
+            s.src = src;
+            s.type = type;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.body.appendChild(s);
+          });
+        await loadScript(
+          "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"
+        );
+        await loadScript(
+          "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        );
+        // Load your app scripts (as modules if needed)
+      })();
     </script>
-    <section class="py-5 text-center hero-section">
-      <div class="container">
-        <img
-          src="https://cdn-icons-png.flaticon.com/512/727/727245.png"
-          alt="Vinyl Icon"
-          style="
-            width: 90px;
-            height: 90px;
-            background: #232a36;
-            border-radius: 50%;
-            padding: 10px;
-            border: 2px solid #43c6ac;
-          "
-          class="mb-3 mt-2 shadow-none"
-        />
-        <h1 class="fw-bold mb-2 hero-heading-text text-center">
-          Group & Member Management
-        </h1>
-        <p class="lead mb-3 hero-lead-text text-center">
-          Track your favorite groups and members, celebrate birthdays and
-          milestones, and keep your K-Pop universe organized!
-        </p>
-      </div>
-    </section>
+    <!-- Member Management Modal for add/edit member -->
     <div
-      class="container p-4 rounded shadow-lg main-container fade-in"
-      style="
-        margin-top: 20px;
-        max-width: 80%;
-        background: #232946;
-        width: 100%;
-      "
+      class="modal fade"
+      id="memberManagementModal"
+      tabindex="-1"
+      aria-labelledby="memberManagementModalLabel"
+      aria-hidden="true"
     >
-  <div class="row g-3 mb-3 d-flex align-items-end">
-        <div class="col-12 col-md-6">
-          <input
-            type="text"
-            id="searchGroupInput"
-            class="form-control"
-            placeholder="Search by group name..."
-          />
-        </div>
-        <div class="col-12 col-md-6 d-flex align-items-center gap-2">
-          <select
-            id="groupSortSelect"
-            class="form-select version-list mb-2"
-            style="max-width: 70%; min-height: 40px; font-size: 0.95em; gap: 0.2em;"
-          >
-            <option value="az">Sort: Group A-Z</option>
-            <option value="za">Sort: Group Z-A</option>
-          </select>
-          <span
-            id="groupCount"
-            class="group-count-badge ms-2"
-            style="white-space: nowrap"
-            ><i class="bi bi-people-fill me-1"></i
-          ></span>
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header">
+            <h5 class="modal-title" id="memberManagementModalLabel">
+              Member Management
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="memberManagementModalBody"></div>
         </div>
       </div>
+    </div>
 
-      <div class="row g-3 mb-4">
-        <div class="col-12">
-          <div class="card border-info bg-dark card-pop">
-            <div class="card-body">
-              <form id="addGroupForm" class="row g-2 align-items-end">
-                <div class="col-12 col-md-8">
-                  <input
-                    type="text"
-                    id="groupName"
-                    class="form-control"
-                    placeholder="Group Name (e.g. BTS)"
-                    required
-                  />
-                </div>
-                <div class="col-12 col-md-4">
-                  <!-- Removed groupImageFile input, now handled by modal gallery -->
-                  <div class="mb-2">
+    <main class="main-content" style="flex: 1 0 auto">
+      <section class="py-5 text-center hero-section">
+        <div class="container">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/727/727245.png"
+            alt="Vinyl Icon"
+            style="
+              width: 90px;
+              height: 90px;
+              background: #232a36;
+              border-radius: 50%;
+              padding: 10px;
+              border: 2px solid #43c6ac;
+            "
+            class="mb-3 mt-2 shadow-none"
+          />
+          <h1 class="fw-bold mb-2 hero-heading-text text-center">
+            Group &amp; Member Management
+          </h1>
+          <p class="lead mb-3 hero-lead-text text-center">
+            Track your favorite groups and members, celebrate birthdays and
+            milestones, and keep your K-Pop universe organized!
+          </p>
+        </div>
+      </section>
+
+      <div
+        class="container p-4 rounded shadow-lg main-container fade-in"
+        style="
+          max-width: 80%;
+          background: #232946;
+          width: 100%;
+          margin-top: 20px;
+        "
+      >
+        <!-- Group Form -->
+        <div class="row g-3 mb-4">
+          <div class="col-12">
+            <div class="card border-info bg-dark card-pop">
+              <div class="card-body">
+                <form id="addGroupForm" class="row g-2 align-items-end">
+                  <div class="col-12 col-md-8">
+                    <input
+                      type="text"
+                      id="groupName"
+                      class="form-control"
+                      placeholder="Group Name (e.g. BTS)"
+                      required
+                    />
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <div class="mb-2">
+                      <button
+                        type="button"
+                        class="btn btn-outline-info btn-sm animated-btn"
+                        id="showGroupImageModal"
+                      >
+                        Choose Existing Image
+                      </button>
+                    </div>
+                    <input type="hidden" id="groupImage" />
+                    <div
+                      id="groupImageUploadStatus"
+                      class="form-text text-info"
+                    ></div>
+                  </div>
+                  <div class="col-12">
+                    <textarea
+                      id="groupNotes"
+                      class="form-control"
+                      rows="2"
+                      placeholder="Notes, fun facts, or your own group ranking..."
+                    ></textarea>
+                  </div>
+                  <div class="col-12 d-grid mt-2">
                     <button
-                      type="button"
-                      class="btn btn-outline-info btn-sm animated-btn"
-                      id="showGroupImageModal"
+                      type="submit"
+                      class="btn btn-info fw-bold add-group-btn-mb animated-btn"
                     >
-                      Choose Existing Image
+                      Add Group
                     </button>
                   </div>
-                  <input type="hidden" id="groupImage" />
-                  <div
-                    id="groupImageUploadStatus"
-                    class="form-text text-info"
-                  ></div>
-                </div>
-                <div class="col-12">
-                  <textarea
-                    id="groupNotes"
-                    class="form-control"
-                    rows="2"
-                    placeholder="Notes, fun facts, or your own group ranking..."
-                  ></textarea>
-                </div>
-                <div class="col-12 d-grid mt-2">
-                  <button
-                    type="submit"
-                    class="btn btn-info fw-bold add-group-btn-mb animated-btn"
-                  >
-                    Add Group
-                  </button>
-                </div>
-              </form>
-              <ul id="groupList" class="list-group mb-3"></ul>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div
-        id="galleryView"
-        class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"
-      ></div>
-    </div>
+        <!-- Filter Row -->
+        <div class="row g-3 mb-3 d-flex align-items-end">
+          <div class="col-12 col-md-6">
+            <input
+              type="text"
+              id="searchGroupInput"
+              class="form-control"
+              placeholder="Search by group name..."
+            />
+          </div>
+          <div class="col-12 col-md-6 d-flex align-items-center gap-2">
+            <select
+              id="groupSortSelect"
+              class="form-select version-list mb-2"
+              style="
+                max-width: 70%;
+                min-height: 40px;
+                font-size: 0.95em;
+                gap: 0.2em;
+              "
+            >
+              <option value="az">Sort: Group A-Z</option>
+              <option value="za">Sort: Group Z-A</option>
+            </select>
+            <span
+              id="groupCount"
+              class="group-count-badge ms-2"
+              style="white-space: nowrap"
+              ><i class="bi bi-people-fill me-1"></i
+            ></span>
+          </div>
+        </div>
+
+        <!-- Group List -->
+        <div class="row g-3 mb-0">
+          <div class="col-12">
+            <div
+              class="card border-info bg-dark"
+              style="border-radius: 18px; box-shadow: 0 2px 16px 0 #43c6ac33"
+            >
+              <div
+                class="card-body p-3"
+                style="padding-bottom: 0.5rem !important"
+              >
+                <ul
+                  id="groupList"
+                  class="list-group mb-3"
+                  style="
+                    background: transparent;
+                    border: none;
+                    padding: 0;
+                    margin: 0;
+                  "
+                ></ul>
+                <div id="groupPagination"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="galleryView"
+          class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"
+        ></div>
+      </div>
+    </main>
     <footer
       class="text-center py-4 mt-5"
       style="
@@ -239,6 +266,7 @@
         background: #232226;
         border-radius: 0 0 18px 18px;
         box-shadow: 0 -2px 16px 0 #a06c8533;
+        flex-shrink: 0;
       "
     >
       <div class="container">
@@ -250,121 +278,6 @@
         </small>
       </div>
     </footer>
-
-    <div
-      class="modal fade"
-      id="editGroupModal"
-      tabindex="-1"
-      aria-labelledby="editGroupModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content bg-dark text-light">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editGroupModalLabel">Edit Group</h5>
-            <button
-              type="button"
-              class="btn-close btn-close-white"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <form id="editGroupForm">
-              <div class="mb-3">
-                <label for="editGroupName" class="form-label">Group Name</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="editGroupName"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label for="editGroupImage" class="form-label"
-                  >Group Image URL</label
-                >
-                <!-- Removed editGroupImageFile input, now handled by modal gallery -->
-                <div class="mb-2">
-                  <button
-                    type="button"
-                    class="btn btn-outline-info btn-sm"
-                    id="showEditGroupImageModal"
-                  >
-                    Choose Existing Image
-                  </button>
-                </div>
-                <input type="hidden" id="editGroupImage" />
-                <div
-                  id="editGroupImageUploadStatus"
-                  class="form-text text-info"
-                ></div>
-                <script type="module">
-                  import { showGalleryModal } from '../js/components/galleryModal.js';
-                  document.addEventListener("DOMContentLoaded", function () {
-                    const groupBtn = document.getElementById("showGroupImageModal");
-                    const groupInput = document.getElementById("groupImage");
-                    const groupNameInput = document.getElementById("groupName");
-                    if (groupBtn && groupInput) {
-                      groupBtn.onclick = null;
-                      groupBtn.onclick = function () {
-                        showGalleryModal({
-                          onSelect: async (url) => {
-                            groupInput.value = url;
-                            if (window.editingGroupId) {
-                              const name = document.getElementById('editGroupName').value.trim();
-                              const notes = document.getElementById('editGroupNotes').value.trim();
-                              await window.updateGroup(window.editingGroupId, name, url, notes);
-                            }
-                          },
-                          title: "Select or Upload Group Image",
-                          groupName: groupNameInput && groupNameInput.value ? groupNameInput.value : null
-                        });
-                      };
-                    }
-                    const editBtn = document.getElementById("showEditGroupImageModal");
-                    const editInput = document.getElementById("editGroupImage");
-                    const editGroupNameInput = document.getElementById("editGroupName");
-                    if (editBtn && editInput) {
-                      editBtn.onclick = null;
-                      editBtn.onclick = function () {
-                        showGalleryModal({
-                          onSelect: async (url) => {
-                            editInput.value = url;
-                            if (window.editingGroupId) {
-                              const name = document.getElementById('editGroupName').value.trim();
-                              const notes = document.getElementById('editGroupNotes').value.trim();
-                              await window.updateGroup(window.editingGroupId, name, url, notes);
-                            }
-                          },
-                          title: "Select or Upload Group Image",
-                          groupName: editGroupNameInput && editGroupNameInput.value ? editGroupNameInput.value : null
-                        });
-                      };
-                    }
-                  });
-                </script>
-              </div>
-              <div class="mb-3">
-                <label for="editGroupNotes" class="form-label"
-                  >Notes/Comments</label
-                >
-                <textarea
-                  class="form-control"
-                  id="editGroupNotes"
-                  rows="2"
-                  placeholder="Notes/Comments for this group..."
-                ></textarea>
-              </div>
-              <button type="submit" class="btn btn-info fw-bold">
-                Save Changes
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div
       class="modal fade"
       id="groupInfoModal"
@@ -418,18 +331,26 @@
                 required
               />
               <input
-                    type="file"
-                    id="groupImageFile"
-                    class="form-control mb-1"
-                    accept="image/*"
-                    style="display:none;"
-                  />
-                  <div class="mb-2">
-                    <button type="button" class="btn btn-outline-info btn-sm" id="openGroupGalleryModal">Choose or Upload Image</button>
-                  </div>
-                  <input type="hidden" id="groupImage" />
-                  <div id="groupImageUploadStatus" class="form-text text-info"></div>
+                type="file"
+                id="groupImageFile"
+                class="form-control mb-1"
+                accept="image/*"
+                style="display: none"
               />
+              <div class="mb-2">
+                <button
+                  type="button"
+                  class="btn btn-outline-info btn-sm"
+                  id="openGroupGalleryModal"
+                >
+                  Choose or Upload Image
+                </button>
+              </div>
+              <input type="hidden" id="groupImage" />
+              <div
+                id="groupImageUploadStatus"
+                class="form-text text-info"
+              ></div>
               <input
                 type="text"
                 class="form-control mb-2"
@@ -437,17 +358,30 @@
                 placeholder="Info (optional)"
               />
               <input
-                  type="file"
-                  class="form-control mb-1"
-                  id="editGroupImageFile"
-                  accept="image/*"
-                  style="display:none;"
-                />
-                <div class="mb-2">
-                  <button type="button" class="btn btn-outline-info btn-sm" id="openEditGroupGalleryModal">Choose or Upload Image</button>
-                </div>
-                <input type="hidden" id="editGroupImage" />
-                <div id="editGroupImageUploadStatus" class="form-text text-info"></div>
+                type="file"
+                class="form-control mb-1"
+                id="editGroupImageFile"
+                accept="image/*"
+                style="display: none"
+              />
+              <div class="mb-2">
+                <button
+                  type="button"
+                  class="btn btn-outline-info btn-sm"
+                  id="openEditGroupGalleryModal"
+                >
+                  Choose or Upload Image
+                </button>
+              </div>
+              <input type="hidden" id="editGroupImage" />
+              <div
+                id="editGroupImageUploadStatus"
+                class="form-text text-info"
+              ></div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div
@@ -518,132 +452,6 @@
       </div>
     </div>
 
-    <script>
-      // After navbar is injected, bind userMenuBtn logic
-      function setupUserMenuBtnListener() {
-        var btn = document.getElementById('userMenuBtn');
-        if (!btn) return;
-        btn.addEventListener('click', function() {
-          console.log('userMenuBtn pressed');
-          var ModalClass = window.bootstrap && window.bootstrap.Modal ? window.bootstrap.Modal : (window.Modal || null);
-          if (!ModalClass) {
-            console.warn('Bootstrap Modal not found.');
-            return;
-          }
-          var modalElem = document.getElementById('userMenuModal');
-          if (!modalElem) {
-            console.warn('userMenuModal element not found.');
-            return;
-          }
-          function showModal(isLoggedIn, email) {
-            var body = document.getElementById('userMenuModalBody');
-            if (!body) return;
-            if (isLoggedIn) {
-              body.innerHTML = `
-                <div class=\"mb-3 text-center\">
-                  <i class=\"bi bi-person-circle\" style=\"font-size:2.5em;\"></i>
-                  <div class=\"fw-bold mt-2\">${email}</div>
-                </div>
-                <div class=\"d-grid gap-2\">
-                  <a href=\"/pages/profile.html\" class=\"btn btn-info\">My Profile</a>
-                  <button id=\"logoutBtnModal\" class=\"btn btn-outline-secondary\">Logout</button>
-                </div>
-              `;
-              setTimeout(function() {
-                var logoutBtn = document.getElementById('logoutBtnModal');
-                if (logoutBtn) {
-                  logoutBtn.onclick = function() {
-                    if (window.signOut) {
-                      window.signOut();
-                    } else if (window.supabase) {
-                      window.supabase.auth.signOut().then(function() { window.location.reload(); });
-                    } else {
-                      window.location.reload();
-                    }
-                  };
-                }
-              }, 0);
-            } else {
-              body.innerHTML = `
-                <div class=\"mb-3 text-center\">
-                  <i class=\"bi bi-person-circle\" style=\"font-size:2.5em;\"></i>
-                </div>
-                <div class=\"d-grid gap-2\">
-                  <button id=\"loginBtnModal\" class=\"btn btn-info\">Login</button>
-                </div>
-              `;
-              setTimeout(function() {
-                var loginBtn = document.getElementById('loginBtnModal');
-                if (loginBtn) {
-                  loginBtn.onclick = function() {
-                    if (typeof showLoginModal === 'function') {
-                      showLoginModal();
-                    } else {
-                      var modal = document.getElementById('authModal');
-                      if (modal && window.bootstrap) {
-                        var modalInstance = new window.bootstrap.Modal(modal);
-                        modalInstance.show();
-                      }
-                    }
-                  };
-                }
-              }, 0);
-            }
-            var modal = new ModalClass(modalElem);
-            modal.show();
-          }
-          // Always use Supabase as the source of truth for auth state
-          if (window.supabase && window.supabase.auth && window.supabase.auth.getUser) {
-            window.supabase.auth.getUser().then(function(resp) {
-              var user = resp && resp.data && resp.data.user;
-              if (user && user.email) {
-                showModal(true, user.email);
-              } else {
-                showModal(false, '');
-              }
-            });
-          } else {
-            showModal(false, '');
-          }
-        });
-      }
-      // Wait for navbar to be injected, then bind
-      function tryBindUserMenuBtn(retries) {
-        if (document.getElementById('userMenuBtn')) {
-          setupUserMenuBtnListener();
-        } else if (retries > 0) {
-          setTimeout(function() { tryBindUserMenuBtn(retries - 1); }, 200);
-        }
-      }
-      tryBindUserMenuBtn(20);
-    </script>
-  <script>
-    // Dynamically load userMenuModal.js after supabaseClient.js is ready
-    (function loadUserMenuModalWhenReady() {
-      function injectScript() {
-        const script = document.createElement("script");
-        script.type = "module";
-        script.src = "../js/userMenuModal.js";
-        document.body.appendChild(script);
-      }
-      if (window.supabasePromise) {
-        injectScript();
-      } else {
-        let tries = 0;
-        const maxTries = 20;
-        const interval = setInterval(() => {
-          if (window.supabasePromise) {
-            clearInterval(interval);
-            injectScript();
-          } else if (++tries >= maxTries) {
-            clearInterval(interval);
-            console.error(
-              "userMenuModal.js: supabasePromise not found after waiting."
-            );
-          }
-        }, 100);
-      }
-    })();
-  </script>
+    <script type="module" src="../js/pages/groupManagement.js"></script>
   </body>
 </html>
