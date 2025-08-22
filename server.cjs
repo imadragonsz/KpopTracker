@@ -103,6 +103,55 @@ if (fs.existsSync(uploadsDir)) {
   });
 }
 
+// Delete uploaded images endpoint
+app.post("/api/delete-uploads", express.json(), (req, res) => {
+  const { images, group } = req.body;
+  console.log("[DELETE-UPLOADS] Request received:", { images, group });
+  if (!Array.isArray(images) || !images.length) {
+    console.warn("[DELETE-UPLOADS] No images provided.");
+    return res.status(400).json({ error: "No images provided." });
+  }
+  let deleted = 0;
+  let errors = [];
+  for (const url of images) {
+    // url is like /uploads/filename
+    const fname = url.split("/uploads/")[1];
+    if (!fname) {
+      console.warn(`[DELETE-UPLOADS] Invalid image url: ${url}`);
+      errors.push(url);
+      continue;
+    }
+    const filePath = path.join(uploadsDir, fname);
+    const metaPath = filePath + ".meta.json";
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`[DELETE-UPLOADS] Deleted file: ${filePath}`);
+        deleted++;
+      } else {
+        console.warn(`[DELETE-UPLOADS] File not found: ${filePath}`);
+      }
+      if (fs.existsSync(metaPath)) {
+        fs.unlinkSync(metaPath);
+        console.log(`[DELETE-UPLOADS] Deleted meta: ${metaPath}`);
+      } else {
+        console.warn(`[DELETE-UPLOADS] Meta not found: ${metaPath}`);
+      }
+    } catch (err) {
+      console.error(`[DELETE-UPLOADS] Error deleting ${filePath}:`, err);
+      errors.push(url);
+    }
+  }
+  if (errors.length) {
+    console.error(`[DELETE-UPLOADS] Some images could not be deleted:`, errors);
+    return res
+      .status(500)
+      .json({ error: "Some images could not be deleted.", errors });
+  }
+  console.log(`[DELETE-UPLOADS] Deleted ${deleted} images successfully.`);
+  res.json({ success: true, deleted });
+});
+
 // Dynamic main page (unprotected)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "pages", "index.html"));

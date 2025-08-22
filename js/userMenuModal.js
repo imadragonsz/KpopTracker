@@ -1,39 +1,23 @@
 // Debug: Log all click events to see what is being clicked
-document.addEventListener("click", function (e) {
-  console.log(
-    "[Modal Debug] Click event:",
-    e.target,
-    "Classes:",
-    e.target.className
-  );
-});
+// document.addEventListener("click", function (e) {
+//   console.log(
+//     "[Modal Debug] Click event:",
+//     e.target,
+//     "Classes:",
+//     e.target.className
+//   );
+// });
 // Last-resort: Remove modal-backdrop on any .btn-close click inside a modal
 // Attach .btn-close click handler directly to document (not inside DOMContentLoaded)
 document.addEventListener("click", function (e) {
   if (e.target.classList.contains("btn-close")) {
-    console.log("[Modal Debug] btn-close click handler triggered");
     // Immediate check
     const allBackdropsNow = document.querySelectorAll(".modal-backdrop");
-    console.log(
-      "[Modal Debug] (Immediate) All .modal-backdrop elements:",
-      allBackdropsNow
-    );
     const backdropNow = document.querySelector(
       "body > div.modal-backdrop.fade.show"
     );
-    console.log(
-      "[Modal Debug] (Immediate) Query for body > div.modal-backdrop.fade.show:",
-      backdropNow
-    );
     if (backdropNow) {
-      console.log(
-        "[Modal Debug] (Immediate) Removing backdrop via btn-close click"
-      );
       backdropNow.remove();
-    } else {
-      console.log(
-        "[Modal Debug] (Immediate) No backdrop found via btn-close click"
-      );
     }
     document.body.classList.remove("modal-open");
     document.body.style.overflow = "";
@@ -41,26 +25,11 @@ document.addEventListener("click", function (e) {
     // Delayed fallback
     setTimeout(function () {
       const allBackdrops = document.querySelectorAll(".modal-backdrop");
-      console.log(
-        "[Modal Debug] (Delayed) All .modal-backdrop elements:",
-        allBackdrops
-      );
       const backdrop = document.querySelector(
         "body > div.modal-backdrop.fade.show"
       );
-      console.log(
-        "[Modal Debug] (Delayed) Query for body > div.modal-backdrop.fade.show:",
-        backdrop
-      );
       if (backdrop) {
-        console.log(
-          "[Modal Debug] (Delayed) Removing backdrop via btn-close click"
-        );
         backdrop.remove();
-      } else {
-        console.log(
-          "[Modal Debug] (Delayed) No backdrop found via btn-close click"
-        );
       }
       document.body.classList.remove("modal-open");
       document.body.style.overflow = "";
@@ -75,10 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
       "body > div.modal-backdrop.fade.show"
     );
     if (backdrop) {
-      console.log("[Modal Debug] Removing backdrop via MutationObserver");
       backdrop.remove();
-    } else {
-      console.log("[Modal Debug] No backdrop found via MutationObserver");
     }
     if (!document.body.classList.contains("modal-open")) {
       document.body.style.overflow = "";
@@ -95,10 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "body > div.modal-backdrop.fade.show"
       );
       if (backdrop) {
-        console.log("[Modal Debug] Removing backdrop via hidden.bs.modal");
         backdrop.remove();
-      } else {
-        console.log("[Modal Debug] No backdrop found via hidden.bs.modal");
       }
       document.body.classList.remove("modal-open");
       document.body.style.overflow = "";
@@ -113,7 +76,6 @@ function setupUserMenuBtnListener() {
   const btn = document.getElementById("userMenuBtn");
   if (!btn) return;
   btn.addEventListener("click", async function () {
-    console.log("userMenuBtn pressed");
     const ModalClass =
       window.bootstrap && window.bootstrap.Modal
         ? window.bootstrap.Modal
@@ -226,14 +188,7 @@ function setupUserMenuBtnListener() {
                           "body > div.modal-backdrop.fade.show"
                         );
                         if (backdrop) {
-                          console.log(
-                            "[Modal Debug] Removing backdrop via logout fallback"
-                          );
                           backdrop.remove();
-                        } else {
-                          console.log(
-                            "[Modal Debug] No backdrop found via logout fallback"
-                          );
                         }
                         document.body.classList.remove("modal-open");
                         document.body.style.overflow = "";
@@ -246,14 +201,7 @@ function setupUserMenuBtnListener() {
                         "body > div.modal-backdrop.fade.show"
                       );
                       if (backdrop) {
-                        console.log(
-                          "[Modal Debug] Removing backdrop via logout fallback (no bootstrap)"
-                        );
                         backdrop.remove();
-                      } else {
-                        console.log(
-                          "[Modal Debug] No backdrop found via logout fallback (no bootstrap)"
-                        );
                       }
                       document.body.classList.remove("modal-open");
                       document.body.style.overflow = "";

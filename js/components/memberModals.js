@@ -55,7 +55,7 @@ export function showMemberInfoModal(member) {
 }
 
 export function showMemberManagementModal(members = [], onSave) {
-  const modal = document.getElementById("memberManagementModal");
+  const modal = document.getElementById("manageMembersModal");
   const modalBody = modal.querySelector(".modal-body");
   let membersListHtml = "";
   if (Array.isArray(members) && members.length > 0) {
@@ -97,7 +97,7 @@ export function showMemberManagementModal(members = [], onSave) {
     "</div>" +
     '<div class="mb-3">' +
     '<label for="memberBirthday" class="form-label">Birthday</label>' +
-    '<input type="date" class="form-control" id="memberBirthday">' +
+    '<input type="text" class="form-control date-picker" id="memberBirthday">' +
     "</div>" +
     '<div class="mb-3">' +
     '<label for="memberHeight" class="form-label">Height (cm)</label>' +

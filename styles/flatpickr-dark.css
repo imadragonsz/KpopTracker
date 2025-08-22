@@ -1,0 +1,87 @@
+/* Flatpickr dark theme override for Kpop Album Tracker */
+
+@import url("https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css");
+
+.flatpickr-calendar {
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 #43c6ac55;
+  background: #232946;
+  color: #eaeaea;
+  border: 1.5px solid #43c6ac;
+  min-width: 320px;
+}
+.flatpickr-months .flatpickr-month {
+  color: #43c6ac;
+  font-weight: 600;
+  font-size: 1.1em;
+  letter-spacing: 0.5px;
+}
+.flatpickr-weekdays {
+  background: #232946;
+  border-bottom: 1px solid #43c6ac44;
+}
+.flatpickr-weekday {
+  color: #43c6ac;
+  font-weight: 500;
+  font-size: 1em;
+}
+.flatpickr-day {
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+  font-weight: 500;
+  font-size: 1em;
+  border: 1.5px solid transparent;
+}
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+  background: #43c6ac;
+  color: #fff;
+  border: 1.5px solid #43c6ac;
+}
+.flatpickr-day.today:not(.selected) {
+  border: 1.5px solid #43c6ac;
+  background: #181a20;
+  color: #43c6ac;
+}
+.flatpickr-day:hover:not(.selected):not(.disabled) {
+  background: #232946;
+  color: #43c6ac;
+  border: 1.5px solid #43c6ac;
+}
+.flatpickr-day.disabled,
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  color: #bfc9db;
+  background: #181a20;
+  opacity: 0.5;
+}
+.flatpickr-current-month input.cur-year {
+  background: transparent;
+  color: #43c6ac;
+  font-weight: 600;
+  border-radius: 6px;
+}
+.flatpickr-time input {
+  background: #181a20;
+  color: #eaeaea;
+  border-radius: 6px;
+  border: 1px solid #43c6ac44;
+}
+.flatpickr-calendar .flatpickr-clear,
+.flatpickr-calendar .flatpickr-close,
+.flatpickr-calendar .flatpickr-today {
+  color: #43c6ac;
+  background: #181a20;
+  border-radius: 6px;
+  border: 1px solid #43c6ac44;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+.flatpickr-calendar .flatpickr-clear:hover,
+.flatpickr-calendar .flatpickr-close:hover,
+.flatpickr-calendar .flatpickr-today:hover {
+  background: #43c6ac;
+  color: #fff;
+}

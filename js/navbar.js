@@ -1,6 +1,6 @@
 // navbar.js - Handles navbar logic for all pages
 
-console.log("[Navbar] navbar.js loaded");
+// ...removed debug log...
 
 // Highlight active nav link
 const navLinks = document.querySelectorAll(".nav-link[data-page]");

@@ -42,8 +42,12 @@ import { removeUserFromGroup } from "../api/groupApi.js";
 import { showGroupInfoModal } from "../components/groupModals.js";
 import { fetchAlbums } from "../api/albumApi.js";
 import { fetchMembersByGroup } from "../api/memberApi.js";
-import { showMemberInfoModal } from "../components/memberModals.js";
-import { updateMember } from "../api/memberApi.js";
+import {
+  showMemberInfoModal,
+  showMemberManagementModal,
+} from "../components/memberModals.js";
+window.showMemberManagementModal = showMemberManagementModal;
+import { updateMember, addMember } from "../api/memberApi.js";
 window.updateGroup = updateGroup;
 
 // --- Pagination and Sorting ---
@@ -117,10 +121,11 @@ function renderGroups(groups) {
               window.showMemberManagementModal(
                 members,
                 async (updatedMember) => {
-                  const memberToEdit = members.find(
+                  let memberToEdit = members.find(
                     (m) => m.name === updatedMember.name
                   );
                   if (memberToEdit) {
+                    // ...removed debug log...
                     await updateMember(
                       memberToEdit.id,
                       updatedMember.name,
@@ -129,12 +134,27 @@ function renderGroups(groups) {
                       updatedMember.birthday,
                       updatedMember.height
                     );
-                    const refreshedMembers = await fetchMembersByGroup(
-                      group.id
-                    );
-                    members.length = 0;
-                    members.push(...refreshedMembers);
+                    // ...removed debug log...
+                  } else {
+                    // Add new member if not found
+                    if (typeof addMember === "function") {
+                      // ...removed debug log...
+                      await addMember(
+                        group.id,
+                        updatedMember.name,
+                        updatedMember.info,
+                        updatedMember.image,
+                        updatedMember.birthday,
+                        updatedMember.height
+                      );
+                      // ...removed debug log...
+                    }
                   }
+                  // Refresh members list after add/update
+                  const refreshedMembers = await fetchMembersByGroup(group.id);
+                  // ...removed debug log...
+                  members.length = 0;
+                  members.push(...refreshedMembers);
                 }
               );
             }

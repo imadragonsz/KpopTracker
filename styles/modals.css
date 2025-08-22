@@ -13,6 +13,7 @@
 /* Transparent background for member list items in member management modal */
 .list-group-item.d-flex.align-items-center.member-list-item {
   background-color: transparent !important;
+  color: #fff !important;
 }
 /* Modal Styles */
 .modal,

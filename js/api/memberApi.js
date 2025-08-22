@@ -82,18 +82,31 @@ export async function addMember(groupId, name, info, image, birthday, height) {
 }
 
 export async function updateMember(id, name, info, image, birthday, height) {
+  // ...removed debug log...
+  // Convert empty string birthday/height to null for Postgres compatibility
+  const safeBirthday = birthday === "" ? null : birthday;
+  const safeHeight = height === "" ? null : height;
   const user = await getCurrentUser();
-  if (!user) return;
+  if (!user) {
+    console.error("[updateMember] No user found.");
+    return;
+  }
   const supabase = await supabasePromise;
   // Fetch member by id
   const { data: members, error } = await supabase
     .from("members")
-    .select("user_id")
+    .select("*")
     .eq("id", id);
   if (error || !members || !members.length) {
-    console.error("[updateMember] Error fetching member:", error);
+    console.error(
+      "[updateMember] Error fetching member:",
+      error,
+      "Fetched:",
+      members
+    );
     return;
   }
+  // ...removed debug log...
   const userIds = members[0].user_id || [];
   if (!userIds.includes(user.id)) {
     console.warn(
@@ -101,10 +114,15 @@ export async function updateMember(id, name, info, image, birthday, height) {
     );
     return;
   }
-  await supabase
+  const { data, error: updateError } = await supabase
     .from("members")
-    .update({ name, info, image, birthday, height })
+    .update({ name, info, image, birthday: safeBirthday, height: safeHeight })
     .eq("id", id);
+  if (updateError) {
+    console.error("[updateMember] Update error:", updateError);
+  } else {
+    // ...removed debug log...
+  }
 }
 
 export async function deleteMember(id) {
