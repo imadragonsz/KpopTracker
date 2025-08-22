@@ -20,12 +20,12 @@ K-Pop Album Tracker is a web application for K-Pop fans to manage, track, and vi
 - 🎵 **Album Collection Management:** Add, edit, and delete albums and versions, including group, release date, and special versions.
 - 👥 **Group Management:** Organize albums by K-Pop group and view group-specific stats.
 - 📊 **Profile & Stats:** View your collection stats, most collected group, recent activity, and manage your account details.
+- 📅 **Modern Date Picker:** All date fields use a modern, dark-themed Flatpickr calendar (with year limits 1980–2030) for consistent, user-friendly date selection.
+- 🖼️ **Gallery & Modal UI:** Modern, responsive modals and gallery management with improved usability and visual design.
 - 📱 **Responsive Design:** Mobile-friendly and accessible UI using Bootstrap 5.
 - 💾 **Export/Import:** Export your collection as CSV or JSON, and import data to migrate or backup your collection.
 - 🔐 **Authentication:** Secure login and account management with Supabase.
 - 🕒 **Recent Activity:** See your most recently added and updated albums at a glance.
-
----
 
 ---
 
@@ -113,7 +113,7 @@ K-Pop Album Tracker is a web application for K-Pop fans to manage, track, and vi
            for all
            using (user_id = auth.uid());
 
-        -- Allow users to access only their own members
+        -- Allow users to access only their own members" on public.members
         create policy "Users can access their own members" on public.members
            for all
            using (user_id = auth.uid());
@@ -121,6 +121,8 @@ K-Pop Album Tracker is a web application for K-Pop fans to manage, track, and vi
 
       - Repeat similar policies for `groups` and `members` tables.
       - For more details, see the [Supabase Auth docs](https://supabase.com/docs/guides/auth).
+
+- All date pickers are automatically initialized with Flatpickr (no extra setup needed). If you add new date fields, use the `date-picker` class for instant calendar support.
 
 ---
 
