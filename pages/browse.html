@@ -33,6 +33,7 @@
         script.type = "module";
         script.src = "../js/navbar.js";
         document.body.appendChild(script);
+        // (Reverted) No manual toggler/collapse re-binding; use default Bootstrap behavior as before.
 
         // Load Supabase and Bootstrap if not already loaded
         const loadScript = (src, type = "text/javascript") =>

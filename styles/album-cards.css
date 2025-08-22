@@ -16,6 +16,9 @@
   border: none !important;
   background: transparent !important;
   color: #eaeaea !important;
+  margin-bottom: 20px;
+  border: 2px solid #43c6ac !important;
+  border-radius: 16px;
 }
 #groupList .redesigned-album-card {
   display: flex;
@@ -132,7 +135,7 @@ body #groupList .list-group-item.album-list-item.redesigned-album-card {
   }
   .album-card-img {
     width: 100% !important;
-    max-width: 220px !important;
+    max-width: 210px !important;
     height: auto !important;
     margin: 0 auto !important;
     display: block !important;
@@ -152,10 +155,6 @@ body #groupList .list-group-item.album-list-item.redesigned-album-card {
     padding: 0.7em 1em !important;
     border-radius: 0.7em !important;
   }
-}
-/* Make list-group text more visible on dark backgrounds */
-.list-group {
-  --bs-list-group-color: #eaeaea;
 }
 /* Make album pagination info more visible */
 .album-pagination-info,

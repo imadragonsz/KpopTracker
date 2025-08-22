@@ -80,8 +80,8 @@ function renderGroups(groups) {
     li.className = "list-group-item d-flex align-items-center py-3";
     li.style.cursor = "pointer";
     let imageHtml = group.image
-      ? `<img src="${group.image}" alt="Group Image" class="img-thumbnail me-3" style="max-width:120px;max-height:120px;">`
-      : `<img src="/assets/images/default-group.png" alt="Group Image" class="img-thumbnail me-3" style="max-width:120px;max-height:120px;">`;
+      ? `<img src="${group.image}" alt="Group Image" class="img-thumbnail me-3" style="max-width:90px;max-height:90px;">`
+      : `<img src="/assets/images/default-group.png" alt="Group Image" class="img-thumbnail me-3" style="max-width:90px;max-height:90px;">`;
     li.innerHTML = `${imageHtml}<span class="flex-grow-1 fs-5">${group.name}</span>
       <button class="btn btn-sm btn-warning ms-auto edit-group-btn" data-id="${group.id}">Edit</button>
       <button class="btn btn-sm btn-danger ms-2 remove-group-btn" data-id="${group.id}">Remove</button>`;
@@ -140,7 +140,20 @@ function renderGroups(groups) {
             }
           }, 300);
         },
-        onAlbumClick: () => {},
+        onAlbumClick: (albumId) => {
+          const album = albums.find((a) => a.id == albumId);
+          if (album) {
+            groupInfoModal.hide();
+            setTimeout(() => {
+              showAlbumInfoModal(album);
+              albumInfoModal.show();
+              // Focus album info modal after hiding group info
+              setTimeout(() => {
+                albumInfoBody && albumInfoBody.focus && albumInfoBody.focus();
+              }, 350);
+            }, 300);
+          }
+        },
         onMemberClick: (memberId) => {
           const member = members.find(
             (m) => m.id == memberId || m.id == +memberId
@@ -157,6 +170,15 @@ function renderGroups(groups) {
       "click",
       async function (e) {
         e.stopPropagation();
+        // Ensure the edit group modal is present
+        if (
+          typeof import("../components/editGroupModal.js").then === "function"
+        ) {
+          const { ensureEditGroupModal } = await import(
+            "../components/editGroupModal.js"
+          );
+          ensureEditGroupModal();
+        }
         const groups = await fetchGroups();
         const g = groups.find((gr) => gr.id == group.id);
         if (g) {
@@ -284,9 +306,92 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // --- Initial Load ---
 document.addEventListener("DOMContentLoaded", () => {
+  // Add group form submit handler using event delegation for robustness
+  document.body.addEventListener("submit", async function (e) {
+    const form = e.target;
+    if (form && form.id === "addGroupForm") {
+      e.preventDefault();
+      // debugger; // Removed for production
+      const name = document.getElementById("groupName").value.trim();
+      const image = document.getElementById("groupImage").value.trim();
+      const notes = document.getElementById("groupNotes").value.trim();
+      // Persist debug info to localStorage for post-reload inspection
+      const debugLog = { name, image, notes, ts: new Date().toISOString() };
+      try {
+        localStorage.setItem("addGroupDebug", JSON.stringify(debugLog));
+      } catch {}
+      console.log("[AddGroup] Form submit (delegated):", debugLog);
+      if (!name) {
+        console.warn("[AddGroup] No group name provided, aborting.");
+        return;
+      }
+      // Dynamically import addGroup if not already available
+      let addGroupFn = null;
+      try {
+        const mod = await import("../api/groupApi.js");
+        addGroupFn = mod.addGroup;
+        console.log("[AddGroup] addGroup function loaded:", typeof addGroupFn);
+      } catch (err) {
+        console.error("[AddGroup] Failed to import addGroup:", err);
+        return;
+      }
+      try {
+        const result = await addGroupFn(name, image, notes);
+        console.log("[AddGroup] addGroup result:", result);
+        if (result && !result.error) {
+          // Clear form
+          form.reset();
+          document.getElementById("groupImage").value = "";
+          document.getElementById("groupImageUploadStatus").textContent = "";
+          // Invalidate cache and reload
+          if (window.localStorage) localStorage.removeItem("groups");
+          await fetchAndRenderGroups();
+        } else {
+          alert("Failed to add group. Please try again.");
+        }
+      } catch (err) {
+        console.error("[AddGroup] Error calling addGroup:", err);
+        alert("Failed to add group. See console for details.");
+      }
+    }
+  });
   const groupSortSelect = document.getElementById("groupSortSelect");
   if (groupSortSelect) {
     groupSortSelect.addEventListener("change", loadUserGroupsForManagement);
+  }
+
+  // Add event listener for group image picker button
+  const showGroupImageModalBtn = document.getElementById("showGroupImageModal");
+  if (showGroupImageModalBtn) {
+    showGroupImageModalBtn.addEventListener("click", async function (e) {
+      e.preventDefault();
+      const groupNameInput = document.getElementById("groupName");
+      const groupName = groupNameInput ? groupNameInput.value.trim() : "";
+      if (!groupName) {
+        const status = document.getElementById("groupImageUploadStatus");
+        if (status) status.textContent = "Please enter a group name first.";
+        groupNameInput && groupNameInput.focus();
+        return;
+      }
+      // Dynamically import and show the gallery modal, always passing the current group name
+      const { showGalleryModal } = await import(
+        "../components/galleryModal.js"
+      );
+      showGalleryModal({
+        title: "Select or Upload Group Image",
+        groupName,
+        onSelect: (imgUrl) => {
+          // Set the selected image URL in the hidden input
+          const input = document.getElementById("groupImage");
+          if (input) input.value = imgUrl;
+          // Show status/preview
+          const status = document.getElementById("groupImageUploadStatus");
+          if (status) {
+            status.innerHTML = `<span class='text-success'>Image selected!</span><br><img src='${imgUrl}' alt='Group Image' style='max-width:80px;max-height:80px;margin-top:4px;'>`;
+          }
+        },
+      });
+    });
   }
 
   // Add search functionality

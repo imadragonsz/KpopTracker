@@ -114,6 +114,14 @@ export async function showAlbumInfoModal(album) {
   }
   albumInfoBody.innerHTML = albumHtml;
 
+  // Always show the album info modal
+  const albumInfoModal = document.getElementById("albumInfoModal");
+  if (albumInfoModal && window.bootstrap && window.bootstrap.Modal) {
+    const modalInstance =
+      window.bootstrap.Modal.getOrCreateInstance(albumInfoModal);
+    modalInstance.show();
+  }
+
   // Add event listeners for version badge click (all versions)
   if (totalVersions > 0) {
     setTimeout(() => {

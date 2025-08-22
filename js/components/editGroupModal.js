@@ -35,4 +35,58 @@ export function ensureEditGroupModal() {
   const temp = document.createElement("div");
   temp.innerHTML = modalHtml;
   document.body.appendChild(temp.firstElementChild);
+
+  // Add event listener for the image picker button
+  setTimeout(() => {
+    const btn = document.getElementById("showEditGroupImageModal");
+    if (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        // Get the current group name from the input
+        const groupNameInput = document.getElementById("editGroupName");
+        const groupName = groupNameInput ? groupNameInput.value.trim() : null;
+        import("./galleryModal.js").then(({ showGalleryModal }) => {
+          showGalleryModal({
+            onSelect: async (imgUrl) => {
+              const input = document.getElementById("editGroupImage");
+              if (input) input.value = imgUrl;
+              // Immediately update the group in the database
+              const name = groupNameInput ? groupNameInput.value.trim() : "";
+              const notesInput = document.getElementById("editGroupNotes");
+              const notes = notesInput ? notesInput.value.trim() : "";
+              const groupId = window.editingGroupId;
+              if (groupId && name) {
+                // Dynamically import updateGroup if not available
+                let updateGroupFn = window.updateGroup;
+                if (!updateGroupFn) {
+                  const mod = await import("../api/groupApi.js");
+                  updateGroupFn = mod.updateGroup;
+                }
+                await updateGroupFn(groupId, name, imgUrl, notes);
+                // Rerender the album list with fresh data
+                if (window.localStorage) {
+                  localStorage.removeItem("groups");
+                }
+                // Always fetch fresh data and render
+                let fetchGroupsFn = window.fetchGroups;
+                let renderGroupsFn = window.renderGroups;
+                if (!fetchGroupsFn || !renderGroupsFn) {
+                  const mgmt = await import("../pages/groupManagement.js");
+                  fetchGroupsFn = mgmt.fetchGroups;
+                  renderGroupsFn = mgmt.renderGroups;
+                }
+                if (fetchGroupsFn && renderGroupsFn) {
+                  const groups = await fetchGroupsFn();
+                  if (window.setCachedData) setCachedData("groups", groups);
+                  renderGroupsFn(groups);
+                }
+              }
+            },
+            context: "edit-group",
+            groupName: groupName || undefined,
+          });
+        });
+      });
+    }
+  }, 0);
 }

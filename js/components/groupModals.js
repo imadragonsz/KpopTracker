@@ -1,6 +1,6 @@
 import { showAlbumInfoModal } from "./albumModals.js";
 let currentGroupAlbumsPage = 1;
-const GROUP_ALBUMS_PER_PAGE = 10;
+const GROUP_ALBUMS_PER_PAGE = 3;
 
 export function showGroupInfoModal(group, members, albums, callbacks) {
   const groupInfoBody = document.getElementById("groupInfoBody");
@@ -33,6 +33,7 @@ export function showGroupInfoModal(group, members, albums, callbacks) {
     const totalPages = Math.ceil(albums.length / GROUP_ALBUMS_PER_PAGE);
     if (currentGroupAlbumsPage > totalPages)
       currentGroupAlbumsPage = totalPages || 1;
+    if (currentGroupAlbumsPage < 1) currentGroupAlbumsPage = 1;
     const startIdx = (currentGroupAlbumsPage - 1) * GROUP_ALBUMS_PER_PAGE;
     const endIdx = startIdx + GROUP_ALBUMS_PER_PAGE;
     const pageAlbums = albums.slice(startIdx, endIdx);
@@ -60,8 +61,8 @@ export function showGroupInfoModal(group, members, albums, callbacks) {
       </ul>
     </div>`;
     // Pagination controls
-    albumsHtml += `<div class='d-flex justify-content-center align-items-center mt-3' id='groupAlbumsPagination'>`;
     if (totalPages > 1) {
+      albumsHtml += `<div class='d-flex justify-content-center align-items-center mt-3' id='groupAlbumsPagination'>`;
       albumsHtml += `<button class='btn btn-secondary me-2' id='groupAlbumsPrevBtn' ${
         currentGroupAlbumsPage === 1 ? "disabled" : ""
       }>Previous</button>`;
@@ -69,8 +70,8 @@ export function showGroupInfoModal(group, members, albums, callbacks) {
       albumsHtml += `<button class='btn btn-secondary ms-2' id='groupAlbumsNextBtn' ${
         currentGroupAlbumsPage === totalPages ? "disabled" : ""
       }>Next</button>`;
+      albumsHtml += `</div>`;
     }
-    albumsHtml += `</div>`;
   }
   infoHtml += albumsHtml;
   groupInfoBody.innerHTML = infoHtml;
@@ -78,17 +79,37 @@ export function showGroupInfoModal(group, members, albums, callbacks) {
   setTimeout(() => {
     document.getElementById("manageMembersBtn").onclick =
       callbacks.onManageMembers;
-    document.querySelectorAll(".album-list-item").forEach((item) => {
-      item.onclick = function () {
-        const albumId = this.getAttribute("data-album-id");
-        const album = albums.find((a) => String(a.id) === String(albumId));
-        if (album) {
-          showAlbumInfoModal(album);
-        } else if (callbacks && typeof callbacks.onAlbumClick === "function") {
-          callbacks.onAlbumClick(albumId);
+
+    // Event delegation for album-list-item clicks (matches albumCollectionPage pattern)
+    const groupAlbumsList = document.getElementById("groupAlbumsList");
+    if (groupAlbumsList && !groupAlbumsList._albumItemDelegation) {
+      groupAlbumsList.addEventListener("click", function (event) {
+        const item = event.target.closest(".album-list-item");
+        if (item) {
+          const albumId = item.getAttribute("data-album-id");
+          const album = albums.find((a) => String(a.id) === String(albumId));
+          if (album) {
+            // Hide group info modal before showing album info modal
+            const groupInfoModal = document.getElementById("groupInfoModal");
+            if (groupInfoModal && window.bootstrap && window.bootstrap.Modal) {
+              const modalInstance =
+                window.bootstrap.Modal.getOrCreateInstance(groupInfoModal);
+              modalInstance.hide();
+            }
+            setTimeout(() => {
+              showAlbumInfoModal(album);
+            }, 350);
+          } else if (
+            callbacks &&
+            typeof callbacks.onAlbumClick === "function"
+          ) {
+            callbacks.onAlbumClick(albumId);
+          }
         }
-      };
-    });
+      });
+      groupAlbumsList._albumItemDelegation = true;
+    }
+
     // Event delegation for member-badge clicks
     if (!groupInfoBody._memberBadgeDelegation) {
       groupInfoBody.addEventListener("click", function (event) {
@@ -97,23 +118,12 @@ export function showGroupInfoModal(group, members, albums, callbacks) {
           event.stopPropagation();
           if (event.stopImmediatePropagation) event.stopImmediatePropagation();
           const memberId = badge.getAttribute("data-member-id");
-          console.log(
-            "[GMODALS .member-badge DELEGATED handler] memberId:",
-            memberId,
-            "callbacks:",
-            callbacks
-          );
           callbacks.onMemberClick(memberId);
         }
       });
       groupInfoBody._memberBadgeDelegation = true;
-      console.log(
-        "[GMODALS] Delegation handler attached to groupInfoBody:",
-        groupInfoBody,
-        "Current HTML:",
-        groupInfoBody.innerHTML
-      );
     }
+
     // Pagination button events
     const prevBtn = document.getElementById("groupAlbumsPrevBtn");
     const nextBtn = document.getElementById("groupAlbumsNextBtn");

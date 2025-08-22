@@ -2,14 +2,14 @@
 // Utility functions for pagination
 
 export function getCardWidth() {
-  // 220px for >=576px, 160px for <576px
-  return window.innerWidth < 576 ? 160 : 220;
+  // 200px for >=576px, 160px for <576px
+  return window.innerWidth < 576 ? 160 : 210;
 }
 
 export function getCardPageSize(
   cardWidth = getCardWidth(),
   minCards = 1,
-  maxCards = 6,
+  maxCards = 7,
   gap = 16
 ) {
   // Dynamically get the current .container's computed width

@@ -49,26 +49,54 @@
 .modal.show {
   display: block;
 }
+/* Modal dialog: center, max height 700px, responsive width */
 .modal-dialog {
   position: static;
   margin: 6.5rem auto 1.5rem auto;
   max-width: min(98vw, 500px);
   width: 100%;
-  max-height: calc(100vh - 4rem);
   min-height: unset;
   box-sizing: border-box;
   overflow-x: hidden;
+  max-height: 775px;
+  transition: box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
 }
+
 .modal-content {
   border-radius: clamp(12px, 2vw, 24px) !important;
   padding: 0 !important;
-  max-height: calc(100vh - 8vh - 32px) !important;
-  overflow-y: auto !important;
+  max-height: 775px !important;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   background: #232226 !important;
   color: #f4f4f4 !important;
   border: 1.5px solid #35343a !important;
   box-shadow: 0 2px 12px 0 #00000022;
+}
+
+/* Only scroll the modal body, not header/footer */
+.modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1.5rem 1.5rem 1.5rem 1.5rem;
+  max-height: calc(775px - 120px); /* header+footer est. 120px */
+}
+
+/* Custom minimal scrollbar for modal body */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+.modal-body::-webkit-scrollbar-thumb {
+  background: #35343a;
+  border-radius: 6px;
+}
+.modal-body {
+  scrollbar-width: thin;
+  scrollbar-color: #35343a #232226;
 }
 .modal-header {
   border-bottom: 1px solid #313a5a;
@@ -84,9 +112,10 @@
 @media (max-width: 575.98px) {
   .modal-dialog {
     max-width: 100vw;
+    max-height: 98vh;
   }
   .modal-content {
-    max-height: calc(100vh - 8vh - 16px) !important;
+    max-height: 98vh !important;
   }
 }
 /* Ensure pointer events and stacking for visible modals */

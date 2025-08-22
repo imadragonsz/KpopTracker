@@ -34,6 +34,7 @@
         script.type = "module";
         script.src = "../js/navbar.js";
         document.body.appendChild(script);
+        // (Reverted) No manual toggler/collapse re-binding; use default Bootstrap behavior as before.
 
         // Load Supabase and Bootstrap if not already loaded
         const loadScript = (src, type = "text/javascript") =>
@@ -186,18 +187,6 @@
                 ></ul>
                 <!-- Album cards will be rendered here by JavaScript after login -->
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="container mt-5">
-        <div class="row justify-content-center">
-          <div class="col-md-8">
-            <div class="alert alert-info text-center" role="alert">
-              <b>Feedback?</b> Found a bug or have a feature request?
-              <a href="mailto:feedback@kpoptracker.com" class="alert-link"
-                >Let us know!</a
-              >
             </div>
           </div>
         </div>
