@@ -106,57 +106,48 @@ function renderGroups(groups) {
       showGroupInfoModal(group, members, groupAlbums, {
         onShow: () => showModalById("groupInfoModal"),
         onManageMembers: () => {
-          hideModalById("groupInfoModal");
-          setTimeout(() => {
-            window.currentGroupId = group.id;
-            if (typeof window.showMembersList === "function")
-              window.showMembersList();
-            showModalById("manageMembersModal");
-          }, 300);
-        },
-        onManageMembers: () => {
+          console.log('[GroupManagement] onManageMembers callback triggered');
           hideModalById("groupInfoModal");
           setTimeout(() => {
             if (typeof window.showMemberManagementModal === "function") {
-              window.showMemberManagementModal(
-                members,
-                async (updatedMember) => {
-                  let memberToEdit = members.find(
-                    (m) => m.name === updatedMember.name
+              console.log('[GroupManagement] Calling showMemberManagementModal with members:', members);
+              async function handleMemberSave(updatedMember) {
+                console.log('[GroupManagement] handleMemberSave called', updatedMember);
+                let memberToEdit = members.find(
+                  (m) => m.name === updatedMember.name
+                );
+                if (memberToEdit) {
+                  await updateMember(
+                    memberToEdit.id,
+                    updatedMember.name,
+                    updatedMember.info,
+                    updatedMember.image,
+                    updatedMember.birthday,
+                    updatedMember.height
                   );
-                  if (memberToEdit) {
-                    // ...removed debug log...
-                    await updateMember(
-                      memberToEdit.id,
+                } else {
+                  if (typeof addMember === "function") {
+                    await addMember(
+                      group.id,
                       updatedMember.name,
                       updatedMember.info,
                       updatedMember.image,
                       updatedMember.birthday,
                       updatedMember.height
                     );
-                    // ...removed debug log...
-                  } else {
-                    // Add new member if not found
-                    if (typeof addMember === "function") {
-                      // ...removed debug log...
-                      await addMember(
-                        group.id,
-                        updatedMember.name,
-                        updatedMember.info,
-                        updatedMember.image,
-                        updatedMember.birthday,
-                        updatedMember.height
-                      );
-                      // ...removed debug log...
-                    }
                   }
-                  // Refresh members list after add/update
-                  const refreshedMembers = await fetchMembersByGroup(group.id);
-                  // ...removed debug log...
-                  members.length = 0;
-                  members.push(...refreshedMembers);
                 }
-              );
+                // Refresh members list after add/update and re-show modal
+                const refreshedMembers = await fetchMembersByGroup(group.id);
+                members.length = 0;
+                members.push(...refreshedMembers);
+                // Re-show modal with updated members (keeps open for Add Member (Keep Open))
+                console.log('[GroupManagement] Re-showing showMemberManagementModal with updated members');
+                window.showMemberManagementModal(members, handleMemberSave);
+              }
+              window.showMemberManagementModal(members, handleMemberSave);
+            } else {
+              console.warn('[GroupManagement] showMemberManagementModal is not a function');
             }
           }, 300);
         },

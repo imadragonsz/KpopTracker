@@ -84,6 +84,10 @@ export function showMemberManagementModal(members = [], onSave) {
         '<button class="btn btn-sm btn-info edit-member-btn ms-2" data-member-id="' +
         m.id +
         '">Edit</button>';
+      membersListHtml +=
+        '<button class="btn btn-sm btn-danger remove-member-btn ms-2" data-member-id="' +
+        m.id +
+        '">Remove</button>';
       membersListHtml += "</li>";
     });
     membersListHtml += "</ul></div>";
@@ -94,31 +98,59 @@ export function showMemberManagementModal(members = [], onSave) {
     '<div class="mb-3">' +
     '<label for="memberName" class="form-label">Name</label>' +
     '<input type="text" class="form-control" id="memberName" required>' +
-    "</div>" +
+    '</div>' +
     '<div class="mb-3">' +
     '<label for="memberBirthday" class="form-label">Birthday</label>' +
     '<input type="text" class="form-control date-picker" id="memberBirthday">' +
-    "</div>" +
+    '</div>' +
     '<div class="mb-3">' +
     '<label for="memberHeight" class="form-label">Height (cm)</label>' +
     '<input type="number" class="form-control" id="memberHeight" min="0">' +
-    "</div>" +
+    '</div>' +
     '<div class="mb-3">' +
     '<label class="form-label">Image</label>' +
     '<div class="input-group">' +
     '<input type="hidden" id="memberImage">' +
     '<button type="button" class="btn btn-outline-info" id="chooseMemberImageBtn">Choose or Upload Image</button>' +
     '<span id="memberImagePreview" style="margin-left:10px;display:none;"></span>' +
-    "</div>" +
-    "</div>" +
+    '</div>' +
+    '</div>' +
     '<div class="mb-3">' +
     '<label for="memberInfo" class="form-label">Info</label>' +
     '<textarea class="form-control" id="memberInfo"></textarea>' +
-    "</div>" +
-    '<button type="submit" class="btn btn-primary">Save</button>' +
-    "</form>";
+    '</div>' +
+  '<div class="d-grid">' +
+  '<button type="submit" class="btn btn-primary fw-bold" id="saveMemberBtn">Save</button>' +
+  '</div>' +
+    '</form>';
 
   setTimeout(function () {
+    // Remove member button logic
+    document.querySelectorAll(".remove-member-btn").forEach(function (btn) {
+      btn.onclick = async function (e) {
+        e.preventDefault();
+        const memberId = this.getAttribute("data-member-id");
+        if (!memberId) return;
+        if (!confirm("Are you sure you want to remove this member?")) return;
+        try {
+          // Dynamically import removeMember and call it
+          const mod = await import("../api/memberApi.js");
+          if (typeof mod.removeMember === "function") {
+            await mod.removeMember(memberId);
+            // Remove from local members array
+            const idx = members.findIndex(m => String(m.id) === String(memberId));
+            if (idx !== -1) members.splice(idx, 1);
+            // Re-render modal with updated members
+            showMemberManagementModal(members, onSave);
+          } else {
+            alert("Remove member function not available.");
+          }
+        } catch (err) {
+          alert("Failed to remove member. See console for details.");
+          console.error("Remove member error:", err);
+        }
+      };
+    });
     // Edit member button logic
     document.querySelectorAll(".edit-member-btn").forEach(function (btn) {
       btn.onclick = function (e) {
@@ -157,7 +189,42 @@ export function showMemberManagementModal(members = [], onSave) {
           onSelect: function (url) {
             imageInput.value = url;
             if (imagePreview) {
-              imagePreview.innerHTML =
+    // Add Member (Keep Open) button logic
+    var addMemberNoCloseBtn = document.getElementById("addMemberNoCloseBtn");
+    var memberForm = document.getElementById("memberForm");
+    if (addMemberNoCloseBtn && memberForm) {
+      console.log('[AddMemberNoCloseBtn] Handler attached');
+      addMemberNoCloseBtn.onclick = function (e) {
+        e.preventDefault();
+        console.log('[AddMemberNoCloseBtn] Clicked');
+        // Validate required fields
+        var name = document.getElementById("memberName").value.trim();
+        if (!name) {
+          console.log('[AddMemberNoCloseBtn] Name required');
+          document.getElementById("memberName").focus();
+          return;
+        }
+        var birthday = document.getElementById("memberBirthday").value.trim();
+        var height = document.getElementById("memberHeight").value.trim();
+        var image = document.getElementById("memberImage").value.trim();
+        var info = document.getElementById("memberInfo").value.trim();
+        const memberData = { name, birthday, height, image, info };
+        console.log('[AddMemberNoCloseBtn] onSave:', typeof onSave, memberData);
+        // Call onSave if provided
+        if (typeof onSave === "function") {
+          onSave(memberData);
+        } else {
+          console.log('[AddMemberNoCloseBtn] onSave is not a function');
+        }
+        // Reset form for next entry
+        memberForm.reset();
+        if (imagePreview) {
+          imagePreview.innerHTML = "";
+          imagePreview.style.display = "none";
+        }
+        document.getElementById("memberName").focus();
+      };
+    }
                 '<img src="' +
                 url +
                 '" alt="Member Image" style="max-width:40px;max-height:40px;border-radius:6px;">';

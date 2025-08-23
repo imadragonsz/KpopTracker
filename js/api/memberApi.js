@@ -1,3 +1,8 @@
+// Remove member by id (for modal usage)
+export async function removeMember(id) {
+  // This is just an alias for deleteMember for UI clarity
+  return await deleteMember(id);
+}
 import { supabasePromise } from "./supabaseClient.js";
 import { getCurrentUser } from "../auth.js";
 

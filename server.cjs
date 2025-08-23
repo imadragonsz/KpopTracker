@@ -1,10 +1,76 @@
-// ...existing code...
-
-// List uploaded images endpoint (must be after app, fs, uploadsDir are defined)
+// --- Required modules (must be at the top) ---
 const express = require("express");
 const path = require("path");
 const multer = require("multer");
+const fs = require("fs");
+
+// --- Photocard Gallery Backend ---
 const app = express();
+const photocardsDir = path.join(__dirname, "assets", "photocards");
+const photocardUpload = multer({ dest: photocardsDir });
+
+// Serve static photocards
+if (fs.existsSync(photocardsDir)) {
+  app.use("/photocards", express.static(photocardsDir));
+}
+
+// List all photocards (returns [{filename, originalname, size, uploaded, groupId, memberId}])
+app.get("/api/photocards", (req, res) => {
+  if (!fs.existsSync(photocardsDir)) return res.json([]);
+  const files = fs.readdirSync(photocardsDir).filter(f => !f.endsWith(".meta.json"));
+  const photocards = files.map(fname => {
+    const metaPath = path.join(photocardsDir, fname + ".meta.json");
+    let meta = {};
+    if (fs.existsSync(metaPath)) {
+      try { meta = JSON.parse(fs.readFileSync(metaPath, "utf8")); } catch {}
+    }
+    return {
+      filename: fname,
+      url: `/photocards/${fname}`,
+      originalname: meta.originalname || fname,
+      size: meta.size || null,
+      uploaded: meta.uploaded || null,
+      groupId: meta.groupId || null,
+      memberId: meta.memberId || null
+    };
+  });
+  res.json(photocards);
+});
+
+// Upload one or more photocards
+app.post("/api/photocards/upload", photocardUpload.array("photocard"), (req, res) => {
+  if (!req.files || !req.files.length) return res.status(400).json({ error: "No file(s) uploaded." });
+  const groupId = req.body.groupId || null;
+  const memberId = req.body.memberId || null;
+  const results = [];
+  for (const file of req.files) {
+    const meta = {
+      originalname: file.originalname,
+      size: file.size,
+      uploaded: Date.now(),
+      groupId,
+      memberId
+    };
+    fs.writeFileSync(file.path + ".meta.json", JSON.stringify(meta));
+    results.push({ filename: file.filename, url: `/photocards/${file.filename}` });
+  }
+  res.json({ uploaded: results });
+});
+
+// Delete a photocard
+app.post("/api/photocards/delete", express.json(), (req, res) => {
+  const { filename } = req.body;
+  if (!filename) return res.status(400).json({ error: "No filename provided." });
+  const filePath = path.join(photocardsDir, filename);
+  const metaPath = filePath + ".meta.json";
+  let deleted = false;
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    deleted = true;
+  }
+  if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath);
+  res.json({ success: deleted });
+});
 
 // Multer setup for image uploads (cross-platform)
 const uploadsDir = path.join(__dirname, "assets", "uploads");
@@ -48,7 +114,6 @@ app.use(
 app.use(express.urlencoded({ extended: true }));
 
 // Try to serve uploaded images statically, but don't break if folder is missing
-const fs = require("fs");
 if (fs.existsSync(uploadsDir)) {
   app.use("/uploads", express.static(uploadsDir));
   // Image upload endpoint with duplicate check
@@ -165,6 +230,7 @@ const allowedPages = [
   "groupManagement",
   "profile",
   "browse",
+  "photocardGallery",
 ];
 app.get("/:page.html", (req, res, next) => {
   const page = req.params.page;
