@@ -5,10 +5,6 @@
    <img src="https://img.shields.io/github/last-commit/imadragonsz/KpopTracker?color=43c6ac" alt="Last Commit" />
 </div>
 
-<div align="center">
-   <img src="https://i.imgur.com/2yQ4F1v.png" alt="K-Pop Album Tracker Banner" width="60%"/>
-</div>
-
 <h1 align="center">K-Pop Album Tracker</h1>
 
 <p align="center">
