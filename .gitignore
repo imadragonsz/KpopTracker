@@ -63,6 +63,7 @@ Thumbs.db
 *.png
 *.jpg
 *.meta.json
+
 # Test output
 test-output/
 coverage/
