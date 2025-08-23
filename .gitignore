@@ -60,7 +60,7 @@ Thumbs.db
 *.bak
 *.tmp
 *.swp
-
+*.png
 # Test output
 test-output/
 coverage/
@@ -69,4 +69,5 @@ coverage/
 # Optional: ignore uploads or user-generated content
 uploads/
 public/uploads/
-assets/
+images/
+photocards/
