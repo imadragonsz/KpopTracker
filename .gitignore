@@ -69,3 +69,4 @@ coverage/
 # Optional: ignore uploads or user-generated content
 uploads/
 public/uploads/
+assets/
