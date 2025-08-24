@@ -1,12 +1,55 @@
+// Load environment variables first
+require('dotenv').config();
+
 // --- Required modules (must be at the top) ---
 const express = require("express");
 const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
+const http = require('http');
+const util = require('util');
+
+// Set up logging to files
+const logsDir = path.join(__dirname, 'logs');
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
+const logFile = fs.createWriteStream(path.join(logsDir, 'server.log'), { flags: 'a' });
+const errorFile = fs.createWriteStream(path.join(logsDir, 'error.log'), { flags: 'a' });
+
+// Custom logger that writes to both console and file
+const logger = new console.Console({ stdout: logFile, stderr: errorFile });
+
+// Redirect console.log and console.error
+const originalLog = console.log;
+const originalError = console.error;
+
+console.log = (...args) => {
+  originalLog.apply(console, args);
+  logger.log(new Date().toISOString(), ...args);
+};
+
+console.error = (...args) => {
+  originalError.apply(console, args);
+  logger.error(new Date().toISOString(), ...args);
+};
 
 // --- Photocard Gallery Backend ---
 const app = express();
-const photocardsDir = path.join(__dirname, "assets", "photocards");
+
+// Ensure assets directory exists
+const assetsDir = path.join(__dirname, "assets");
+if (!fs.existsSync(assetsDir)) {
+  console.log('Creating assets directory...');
+  fs.mkdirSync(assetsDir, { recursive: true });
+}
+
+// Setup photocards directory
+const photocardsDir = path.join(assetsDir, "photocards");
+if (!fs.existsSync(photocardsDir)) {
+  console.log('Creating photocards directory...');
+  fs.mkdirSync(photocardsDir, { recursive: true });
+}
 const photocardUpload = multer({ dest: photocardsDir });
 
 // Serve static photocards
@@ -74,6 +117,10 @@ app.post("/api/photocards/delete", express.json(), (req, res) => {
 
 // Multer setup for image uploads (cross-platform)
 const uploadsDir = path.join(__dirname, "assets", "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  console.log('Creating uploads directory...');
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 const upload = multer({ dest: uploadsDir });
 
 // List uploaded images endpoint (must be after app, fs, uploadsDir are defined)
@@ -105,7 +152,12 @@ app.set("views", path.join(__dirname, "views"));
 app.use("/styles", express.static(path.join(__dirname, "styles")));
 app.use("/public", express.static(path.join(__dirname, "public")));
 app.use("/assets", express.static(path.join(__dirname, "assets")));
-app.use("/js", express.static(path.join(__dirname, "js")));
+app.use("/js", (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  express.static(path.join(__dirname, "js"))(req, res, next);
+});
 app.use("/pages", express.static(path.join(__dirname, "pages")));
 app.use(
   "/components",
@@ -217,6 +269,14 @@ app.post("/api/delete-uploads", express.json(), (req, res) => {
   res.json({ success: true, deleted });
 });
 
+// Serve Supabase configuration
+app.get("/api/config", (req, res) => {
+  res.json({
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+  });
+});
+
 // Dynamic main page (unprotected)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "pages", "index.html"));
@@ -246,12 +306,99 @@ app.use((req, res) => {
   res.status(404).send("404 Not Found");
 });
 
-// Export app for use with node .
-module.exports = app;
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
 
-if (require.main === module) {
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, async () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Simple server start with better logging
+const PORT = process.env.PORT || 3000;
+
+console.log('Starting server initialization...');
+
+// Create HTTP server instance
+const server = http.createServer(app);
+
+// For PM2: Export both app and server
+module.exports = { app, server };
+
+// Handle graceful shutdown
+function cleanup() {
+  console.log('Shutting down server...');
+  server.close(() => {
+    console.log('Server closed.');
+    // Don't exit process when running under PM2
+    if (!process.env.PM2_USAGE) {
+      process.exit(0);
+    }
   });
+}
+
+// Setup signal handlers
+process.on('SIGTERM', cleanup);
+process.on('SIGINT', cleanup);
+
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  cleanup();
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled rejection at:', promise, 'reason:', reason);
+  cleanup();
+});
+
+// Start server if running directly (not through PM2)
+if (require.main === module) {
+  try {
+    console.log('Starting server...');
+    
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log('----------------------------------------');
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Local access via: http://localhost:${PORT}`);
+      console.log(`Network access via: http://0.0.0.0:${PORT}`);
+      console.log('Make sure nginx is configured to proxy to this port');
+      console.log('----------------------------------------');
+    });
+
+    server.on('error', (error) => {
+      console.error('Server error:', error.message);
+      if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use!`);
+      }
+      cleanup();
+    });
+
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    cleanup();
+  }
+} else {
+  // When running through PM2, start server immediately
+  console.log('Starting server in PM2 mode...');
+  try {
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log('----------------------------------------');
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Local access via: http://localhost:${PORT}`);
+      console.log(`Network access via: http://0.0.0.0:${PORT}`);
+      console.log('----------------------------------------');
+    });
+
+    server.on('error', (error) => {
+      console.error('Server error:', error.message);
+      if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use!`);
+      }
+      cleanup();
+    });
+  } catch (error) {
+    console.error('Error starting server in PM2 mode:', error);
+    cleanup();
+  }
 }

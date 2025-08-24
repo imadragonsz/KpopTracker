@@ -1,3 +1,8 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
 # Supabase client (contains keys)
 js/api/supabaseClient.js
 # Dependency directories
