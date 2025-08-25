@@ -100,6 +100,24 @@ function renderGroups(groups) {
     const endIdx = startIdx + GROUPS_PER_PAGE;
     const pageGroups = groups.slice(startIdx, endIdx);
 
+    // Update group count display
+    const groupCountEl = document.getElementById("groupCount");
+    if (groupCountEl) {
+      const iconHtml = groupCountEl.dataset.icon || groupCountEl.innerHTML.replace(/\d+$/, '').trim();
+      groupCountEl.innerHTML = `${iconHtml ? iconHtml + ' ' : ''}${groups.length}`;
+      if (!groupCountEl.dataset.icon && iconHtml) {
+        groupCountEl.dataset.icon = iconHtml;
+      }
+    }
+    // Update sort dropdown to match currentSort after rendering
+    const groupSortSelect = document.getElementById("groupSortSelect");
+    if (groupSortSelect) {
+      const expected = currentSort === "name-desc" ? "za" : "az";
+      if (groupSortSelect.value !== expected) {
+        groupSortSelect.value = expected;
+      }
+    }
+
     // Modern card layout (flex row)
     const flexRow = document.createElement("div");
     flexRow.className = "d-flex align-items-stretch flex-wrap gap-3 mb-3 justify-content-center";
@@ -307,6 +325,10 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // --- Initial Load ---
+let allGroups = [];
+let currentSort = "name-asc";
+let currentSearch = "";
+
 document.addEventListener("DOMContentLoaded", () => {
   // Add group form submit handler using event delegation for robustness
   document.body.addEventListener("submit", async function (e) {
@@ -353,9 +375,28 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
   const groupSortSelect = document.getElementById("groupSortSelect");
   if (groupSortSelect) {
-    groupSortSelect.addEventListener("change", loadUserGroupsForManagement);
+    // Map select value to internal sort
+    if (groupSortSelect.value === "za") {
+      currentSort = "name-desc";
+    } else {
+      currentSort = "name-asc";
+    }
+    groupSortSelect.addEventListener("change", function () {
+      if (groupSortSelect.value === "az") {
+        currentSort = "name-asc";
+      } else if (groupSortSelect.value === "za") {
+        currentSort = "name-desc";
+      } else {
+        currentSort = "name-asc";
+      }
+      currentGroupPage = 1;
+      renderGroups(getFilteredAndSortedGroups());
+    });
+    // Set dropdown to match currentSort
+    groupSortSelect.value = currentSort === "name-desc" ? "za" : "az";
   }
 
   // Add event listener for group image picker button
@@ -391,44 +432,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Add search functionality
   const searchInput = document.getElementById("searchGroupInput");
-  let allGroups = [];
-  async function fetchAndRenderGroups() {
-    const user = await getCurrentUser();
-    if (!user) {
-      renderGroups([]);
-      return;
-    }
-    let groups = getCachedData("groups");
-    if (!Array.isArray(groups)) {
-      try {
-        groups = await fetchGroups();
-      } catch {
-        groups = [];
-      }
-      if (!Array.isArray(groups)) groups = [];
-      setCachedData("groups", groups);
-    } else {
-      fetchGroups().then((fresh) => {
-        if (isDataDifferent(fresh, groups)) setCachedData("groups", fresh);
-      });
-    }
-    allGroups = groups;
-    renderGroups(groups);
-  }
-
   if (searchInput) {
     searchInput.addEventListener("input", function () {
-      const value = searchInput.value.trim().toLowerCase();
-      const filtered = allGroups.filter((g) =>
-        g.name.toLowerCase().includes(value)
-      );
-      renderGroups(filtered);
+      currentSearch = searchInput.value.trim().toLowerCase();
+      renderGroups(getFilteredAndSortedGroups());
     });
   }
 
   // Initial load
   fetchAndRenderGroups();
 });
+
+function getFilteredAndSortedGroups() {
+  let groups = allGroups || [];
+  // Filter
+  if (currentSearch) {
+    groups = groups.filter((g) => g.name.toLowerCase().includes(currentSearch));
+  }
+  // Only sort by name
+  if (currentSort === "name-desc") {
+    groups = [...groups].sort((a, b) => b.name.localeCompare(a.name));
+  } else {
+    groups = [...groups].sort((a, b) => a.name.localeCompare(b.name));
+  }
+  return groups;
+}
+
+async function fetchAndRenderGroups() {
+  const user = await getCurrentUser();
+  if (!user) {
+    allGroups = [];
+    renderGroups([]);
+    return;
+  }
+  let groups = getCachedData("groups");
+  if (!Array.isArray(groups)) {
+    try {
+      groups = await fetchGroups();
+    } catch {
+      groups = [];
+    }
+    if (!Array.isArray(groups)) groups = [];
+    setCachedData("groups", groups);
+  } else {
+    fetchGroups().then((fresh) => {
+      if (isDataDifferent(fresh, groups)) setCachedData("groups", fresh);
+    });
+  }
+  allGroups = groups;
+  renderGroups(getFilteredAndSortedGroups());
+}
 
 // --- Album Removed Event (if needed) ---
 document.addEventListener("album-removed", () => {

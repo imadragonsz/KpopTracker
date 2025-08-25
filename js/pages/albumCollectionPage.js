@@ -62,10 +62,71 @@ import "../modules/main.js";
 import { albums, sortAlbums } from "../modules/albumData.js";
 import { renderAlbums } from "../modules/albumUI.js";
 
+// Pagination state
+let currentAlbumPage = 1;
+const ALBUMS_PER_PAGE = 8;
+
 let filtered = albums;
 let sortReversed = false;
 
+function renderAlbumPagination(totalPages) {
+  const paginationDiv = document.getElementById("albumPagination");
+  if (!paginationDiv) return;
+  paginationDiv.className = "d-flex justify-content-center align-items-center mt-3";
+  paginationDiv.innerHTML = "";
+  if (totalPages > 1) {
+    const prevBtn = document.createElement("button");
+    prevBtn.className = "btn btn-secondary me-2";
+    prevBtn.textContent = "Previous";
+    prevBtn.type = "button";
+    prevBtn.disabled = currentAlbumPage === 1;
+    prevBtn.onclick = (e) => {
+      if (e) e.preventDefault();
+      if (currentAlbumPage > 1) {
+        currentAlbumPage--;
+        updateFilters._fromPagination = true;
+        updateFilters();
+        updateFilters._fromPagination = false;
+        // Scroll pagination into view after update
+        setTimeout(() => {
+          const pagDiv = document.getElementById("albumPagination");
+          if (pagDiv) pagDiv.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 0);
+      }
+    };
+    paginationDiv.appendChild(prevBtn);
+    const pageInfo = document.createElement("span");
+    pageInfo.textContent = `Page ${currentAlbumPage} of ${totalPages}`;
+    pageInfo.className = "mx-2";
+    paginationDiv.appendChild(pageInfo);
+    const nextBtn = document.createElement("button");
+    nextBtn.className = "btn btn-secondary ms-2";
+    nextBtn.textContent = "Next";
+    nextBtn.type = "button";
+    nextBtn.disabled = currentAlbumPage === totalPages;
+    nextBtn.onclick = (e) => {
+      if (e) e.preventDefault();
+      if (currentAlbumPage < totalPages) {
+        currentAlbumPage++;
+        updateFilters._fromPagination = true;
+        updateFilters();
+        updateFilters._fromPagination = false;
+        // Scroll pagination into view after update
+        setTimeout(() => {
+          const pagDiv = document.getElementById("albumPagination");
+          if (pagDiv) pagDiv.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 0);
+      }
+    };
+    paginationDiv.appendChild(nextBtn);
+  }
+}
+
 function updateFilters() {
+  // If this is a filter-triggered update (not a pagination-triggered one), reset to first page
+  if (!updateFilters._fromPagination) {
+    currentAlbumPage = 1;
+  }
   const searchInput = document.getElementById("searchInput");
   const filterGroup = document.getElementById("filterGroup");
   const filterReleaseDate = document.getElementById("filterReleaseDate");
@@ -118,10 +179,18 @@ function updateFilters() {
     filtered = sortAlbums(filtered, sortBy);
   }
   if (sortReversed) filtered.reverse();
+  // Pagination logic
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ALBUMS_PER_PAGE));
+  if (currentAlbumPage > totalPages) currentAlbumPage = totalPages;
+  if (currentAlbumPage < 1) currentAlbumPage = 1;
+  const startIdx = (currentAlbumPage - 1) * ALBUMS_PER_PAGE;
+  const endIdx = startIdx + ALBUMS_PER_PAGE;
+  const pageAlbums = filtered.slice(startIdx, endIdx);
   if (albumCount) albumCount.textContent = filtered.length + " albums";
   // Update global filtered for renderAlbums
   if (typeof window !== "undefined") window.filtered = filtered;
-  renderAlbums(filtered);
+  renderAlbums(pageAlbums);
+  renderAlbumPagination(totalPages);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -173,6 +242,7 @@ window.addEventListener("DOMContentLoaded", () => {
   populateGroupFilter();
   populateReleaseDateFilter();
   adjustFilterGroupWidth();
+  currentAlbumPage = 1;
   updateFilters();
   // Re-populate filters and adjust group width after albums are loaded (in case albums load async)
   if (typeof window !== "undefined") {

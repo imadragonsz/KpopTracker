@@ -194,7 +194,7 @@ export function showMemberManagementModal(members = [], onSave) {
     var memberForm = document.getElementById("memberForm");
     if (addMemberNoCloseBtn && memberForm) {
       console.log('[AddMemberNoCloseBtn] Handler attached');
-      addMemberNoCloseBtn.onclick = function (e) {
+      addMemberNoCloseBtn.onclick = async function (e) {
         e.preventDefault();
         console.log('[AddMemberNoCloseBtn] Clicked');
         // Validate required fields
@@ -212,9 +212,121 @@ export function showMemberManagementModal(members = [], onSave) {
         console.log('[AddMemberNoCloseBtn] onSave:', typeof onSave, memberData);
         // Call onSave if provided
         if (typeof onSave === "function") {
-          onSave(memberData);
+          await onSave(memberData);
         } else {
           console.log('[AddMemberNoCloseBtn] onSave is not a function');
+        }
+        // After onSave, re-fetch and update only the members list in place if modal is still open
+        if (modal.classList.contains("show")) {
+          if (typeof window.fetchMembersByGroup === "function" && window.currentGroupId) {
+            const refreshed = await window.fetchMembersByGroup(window.currentGroupId);
+            // Update only the <ul class="list-group mb-2">...</ul> element
+            const membersListUl = modalBody.querySelector('.list-group.mb-2');
+            if (membersListUl) {
+              membersListUl.innerHTML = refreshed.map(m =>
+                '<li class="list-group-item d-flex align-items-center member-list-item" style="cursor:pointer;" data-member-id="' + m.id + '">' +
+                  (m.image ? '<img src="' + m.image + '" alt="Member Image" style="max-width:32px;max-height:32px;border-radius:6px;margin-right:10px;">' : '') +
+                  '<span class="flex-grow-1">' + (m.name ? m.name.replace(/\b\w/g, c => c.toUpperCase()) : '') + '</span>' +
+                  '<button class="btn btn-sm btn-info edit-member-btn ms-2" data-member-id="' + m.id + '">Edit</button>' +
+                  '<button class="btn btn-sm btn-danger remove-member-btn ms-2" data-member-id="' + m.id + '">Remove</button>' +
+                '</li>'
+              ).join('');
+              // Re-attach remove/edit handlers for new list
+              setTimeout(() => {
+                document.querySelectorAll(".remove-member-btn").forEach(function (btn) {
+                  btn.onclick = async function (e) {
+                    e.preventDefault();
+                    const memberId = this.getAttribute("data-member-id");
+                    if (!memberId) return;
+                    if (!confirm("Are you sure you want to remove this member?")) return;
+                    try {
+                      const mod = await import("../api/memberApi.js");
+                      if (typeof mod.removeMember === "function") {
+                        await mod.removeMember(memberId);
+                        // Remove from local members array
+                        const idx = refreshed.findIndex(m => String(m.id) === String(memberId));
+                        if (idx !== -1) refreshed.splice(idx, 1);
+                        // Update list again
+                        membersListUl.innerHTML = refreshed.map(m =>
+                          '<li class="list-group-item d-flex align-items-center member-list-item" style="cursor:pointer;" data-member-id="' + m.id + '">' +
+                            (m.image ? '<img src="' + m.image + '" alt="Member Image" style="max-width:32px;max-height:32px;border-radius:6px;margin-right:10px;">' : '') +
+                            '<span class="flex-grow-1">' + (m.name ? m.name.replace(/\b\w/g, c => c.toUpperCase()) : '') + '</span>' +
+                            '<button class="btn btn-sm btn-info edit-member-btn ms-2" data-member-id="' + m.id + '">Edit</button>' +
+                            '<button class="btn btn-sm btn-danger remove-member-btn ms-2" data-member-id="' + m.id + '">Remove</button>' +
+                          '</li>'
+                        ).join('');
+                        // Re-attach handlers again
+                        setTimeout(() => {
+                          document.querySelectorAll(".remove-member-btn").forEach(function (btn) {
+                            btn.onclick = arguments.callee;
+                          });
+                          document.querySelectorAll(".edit-member-btn").forEach(function (btn) {
+                            btn.onclick = function (e) {
+                              e.preventDefault();
+                              var memberId = this.getAttribute("data-member-id");
+                              var m = refreshed.find(function (mem) {
+                                return mem.id == memberId;
+                              });
+                              if (m) {
+                                document.getElementById("memberName").value = m.name || "";
+                                document.getElementById("memberBirthday").value = m.birthday || "";
+                                document.getElementById("memberHeight").value = m.height || "";
+                                document.getElementById("memberImage").value = m.image || "";
+                                document.getElementById("memberInfo").value = m.info || "";
+                                var imagePreview = document.getElementById("memberImagePreview");
+                                if (m.image && imagePreview) {
+                                  imagePreview.innerHTML =
+                                    '<img src="' +
+                                    m.image +
+                                    '" alt="Member Image" style="max-width:40px;max-height:40px;border-radius:6px;">';
+                                  imagePreview.style.display = "";
+                                } else if (imagePreview) {
+                                  imagePreview.innerHTML = "";
+                                  imagePreview.style.display = "none";
+                                }
+                              }
+                            };
+                          });
+                        }, 0);
+                      } else {
+                        alert("Remove member function not available.");
+                      }
+                    } catch (err) {
+                      alert("Failed to remove member. See console for details.");
+                      console.error("Remove member error:", err);
+                    }
+                  };
+                });
+                document.querySelectorAll(".edit-member-btn").forEach(function (btn) {
+                  btn.onclick = function (e) {
+                    e.preventDefault();
+                    var memberId = this.getAttribute("data-member-id");
+                    var m = refreshed.find(function (mem) {
+                      return mem.id == memberId;
+                    });
+                    if (m) {
+                      document.getElementById("memberName").value = m.name || "";
+                      document.getElementById("memberBirthday").value = m.birthday || "";
+                      document.getElementById("memberHeight").value = m.height || "";
+                      document.getElementById("memberImage").value = m.image || "";
+                      document.getElementById("memberInfo").value = m.info || "";
+                      var imagePreview = document.getElementById("memberImagePreview");
+                      if (m.image && imagePreview) {
+                        imagePreview.innerHTML =
+                          '<img src="' +
+                          m.image +
+                          '" alt="Member Image" style="max-width:40px;max-height:40px;border-radius:6px;">';
+                        imagePreview.style.display = "";
+                      } else if (imagePreview) {
+                        imagePreview.innerHTML = "";
+                        imagePreview.style.display = "none";
+                      }
+                    }
+                  };
+                });
+              }, 0);
+            }
+          }
         }
         // Reset form for next entry
         memberForm.reset();
