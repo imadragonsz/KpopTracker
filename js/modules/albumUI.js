@@ -88,6 +88,9 @@ export async function renderAlbums(albumListArg) {
   }
   const renderList = Array.isArray(lastRenderList) ? lastRenderList : albums;
   let html = "";
+  // Dynamically import admin check
+  const { checkAdminStatus } = await import("../components/adminCheck.js");
+  const isAdmin = await checkAdminStatus();
   for (let i = 0; i < renderList.length; i++) {
     const item = renderList[i];
     let imageHtml = "";
@@ -200,9 +203,7 @@ export async function renderAlbums(albumListArg) {
               <div class="album-card-controls-row">
                 ${paginationControls}
                 <div class="album-card-actions">
-                  <button class='btn btn-sm btn-warning edit-btn me-2' data-id='${
-                    item.id
-                  }'>Edit</button>
+                  ${isAdmin ? `<button class='btn btn-sm btn-warning edit-btn me-2' data-id='${item.id}'>Edit</button>` : ""}
                   <button class='remove-btn btn btn-sm btn-danger' data-id='${
                     item.id
                   }' aria-label='Remove' title='Remove'>&times;</button>
@@ -215,11 +216,12 @@ export async function renderAlbums(albumListArg) {
   }
   albumList.innerHTML = html;
 
-  // Use event delegation for version pagination buttons
+  // Use event delegation for version pagination and remove buttons
   if (!albumList._paginationDelegated) {
-    albumList.addEventListener("click", (e) => {
+    albumList.addEventListener("click", async (e) => {
       const prevBtn = e.target.closest(".version-prev-btn");
       const nextBtn = e.target.closest(".version-next-btn");
+      const removeBtn = e.target.closest(".remove-btn");
       if (prevBtn) {
         e.stopPropagation();
         const albumId = prevBtn.getAttribute("data-album-id");
@@ -240,6 +242,25 @@ export async function renderAlbums(albumListArg) {
             (album._versionPage || 1) + 1
           );
           renderAlbums(lastRenderList);
+        }
+      } else if (removeBtn) {
+        e.stopPropagation();
+        const albumId = removeBtn.getAttribute("data-id");
+        if (albumId) {
+          try {
+            const { deleteAlbum } = await import("../api/albumApi.js");
+            await deleteAlbum(albumId);
+            // Optionally, reload albums from backend here if needed
+            if (typeof window.updateAlbumFilters === "function") {
+              window.updateAlbumFilters();
+            } else {
+              // fallback: re-render with current filtered list
+              renderAlbums(lastRenderList);
+            }
+          } catch (err) {
+            alert("Failed to delete album. See console for details.");
+            console.error("[albumUI] Failed to delete album:", err);
+          }
         }
       }
     });

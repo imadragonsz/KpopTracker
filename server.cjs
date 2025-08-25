@@ -8,6 +8,7 @@ const multer = require("multer");
 const fs = require("fs");
 const http = require('http');
 const util = require('util');
+const { createClient } = require('@supabase/supabase-js');
 
 // Set up logging to files
 const logsDir = path.join(__dirname, 'logs');
@@ -80,8 +81,29 @@ app.get("/api/photocards", (req, res) => {
   res.json(photocards);
 });
 
+// --- Supabase Admin Middleware ---
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+
+async function requireAdmin(req, res, next) {
+  // You must extract the user id from your auth/session system
+  // For example, if you use a JWT in Authorization header:
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return res.status(401).json({ error: 'Not authenticated' });
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return res.status(401).json({ error: 'Not authenticated' });
+  const { data, error: roleError } = await supabase
+    .from('user_roles')
+    .select('is_admin')
+    .eq('user_id', user.id)
+    .single();
+  if (roleError || !data?.is_admin) return res.status(403).json({ error: 'Admins only' });
+  req.user = user;
+  next();
+}
+
 // Upload one or more photocards
-app.post("/api/photocards/upload", photocardUpload.array("photocard"), (req, res) => {
+app.post("/api/photocards/upload", requireAdmin, photocardUpload.array("photocard"), (req, res) => {
   if (!req.files || !req.files.length) return res.status(400).json({ error: "No file(s) uploaded." });
   const groupId = req.body.groupId || null;
   const memberId = req.body.memberId || null;
@@ -101,7 +123,7 @@ app.post("/api/photocards/upload", photocardUpload.array("photocard"), (req, res
 });
 
 // Delete a photocard
-app.post("/api/photocards/delete", express.json(), (req, res) => {
+app.post("/api/photocards/delete", express.json(), requireAdmin, (req, res) => {
   const { filename } = req.body;
   if (!filename) return res.status(400).json({ error: "No filename provided." });
   const filePath = path.join(photocardsDir, filename);

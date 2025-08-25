@@ -12,6 +12,99 @@ const filterGroupSelect = document.getElementById('filterGroupSelect');
 const filterMemberSelect = document.getElementById('filterMemberSelect');
 const clearFilterBtn = document.getElementById('clearFilterBtn');
 
+// --- Improved Admin check helper ---
+// Add bulletproof CSS class for hiding
+if (uploadForm) {
+  if (!document.getElementById('hidden-upload-form-style')) {
+    const style = document.createElement('style');
+    style.id = 'hidden-upload-form-style';
+    style.innerHTML = `.hidden-upload-form { display: none !important; }`;
+    document.head.appendChild(style);
+  }
+}
+let isAdmin = false;
+let lastCheckedUserId = null;
+let lastCheckedIsAdmin = null;
+
+async function checkAdmin() {
+  const supabase = await window.supabasePromise;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData?.session?.user;
+  let adminStatusChanged = false;
+  // Always hide the form by default (with class)
+  if (uploadForm) {
+    uploadForm.classList.add('hidden-upload-form');
+    uploadForm.style.display = 'none';
+    // Only log on first call or user change
+    if (lastCheckedUserId !== user?.id) {
+      console.log('[photocardGallery] Upload form forcibly hidden (default)');
+    }
+  }
+  if (!user) {
+    isAdmin = false;
+    if (lastCheckedUserId !== null) adminStatusChanged = true;
+    lastCheckedUserId = null;
+    lastCheckedIsAdmin = false;
+    // Not logged in, never show form
+    if (uploadForm) {
+      uploadForm.classList.add('hidden-upload-form');
+      uploadForm.style.display = 'none';
+      console.log('[photocardGallery] Not logged in, upload form hidden');
+    }
+  } else {
+    if (user.id === lastCheckedUserId && lastCheckedIsAdmin !== null) {
+      // Use cached admin status
+      isAdmin = lastCheckedIsAdmin;
+      // Only log on user change
+      if (uploadForm) {
+        if (isAdmin) {
+          uploadForm.classList.remove('hidden-upload-form');
+          uploadForm.style.display = '';
+          console.log(`[photocardGallery] User: ${user.email}, isAdmin: ${isAdmin} (cached) -- upload form shown`);
+        } else {
+          uploadForm.classList.add('hidden-upload-form');
+          uploadForm.style.display = 'none';
+          console.log(`[photocardGallery] User: ${user.email}, isAdmin: ${isAdmin} (cached) -- upload form hidden`);
+        }
+      }
+    } else {
+      // Query Supabase for admin status
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('is_admin')
+        .eq('user_id', user.id)
+        .single();
+      isAdmin = !!(data && data.is_admin);
+      lastCheckedUserId = user.id;
+      lastCheckedIsAdmin = isAdmin;
+      adminStatusChanged = true;
+      if (uploadForm) {
+        if (isAdmin) {
+          uploadForm.classList.remove('hidden-upload-form');
+          uploadForm.style.display = '';
+          console.log(`[photocardGallery] User: ${user.email}, isAdmin: ${isAdmin} -- upload form shown`);
+        } else {
+          uploadForm.classList.add('hidden-upload-form');
+          uploadForm.style.display = 'none';
+          console.log(`[photocardGallery] User: ${user.email}, isAdmin: ${isAdmin} -- upload form hidden`);
+        }
+      }
+    }
+  }
+  // Hide all delete buttons if not admin
+  document.querySelectorAll('.delete-photocard').forEach(btn => {
+    btn.style.display = isAdmin ? '' : 'none';
+  });
+}
+
+// Call on page load, after login, and after gallery refresh
+window.addEventListener('DOMContentLoaded', checkAdmin);
+window.addEventListener('updateAuthUIReady', checkAdmin);
+window.addEventListener('authStateChanged', checkAdmin);
+
+// Hide upload form immediately on script load (before any async checks)
+if (uploadForm) uploadForm.style.display = 'none';
+
 // Helper to populate group dropdowns (for upload and filter)
 async function populateGroups() {
   let groups = [];
@@ -145,7 +238,7 @@ async function renderGallery(photocards) {
       <img src="${card.url}" class="photocard-img" alt="Photocard" loading="lazy" />
       <div class="photocard-actions">
         <span class="photocard-filename">${card.originalname}</span>
-        <button class="btn btn-sm btn-danger delete-photocard" data-filename="${card.filename}"><i class="bi bi-trash"></i></button>
+        <button class="btn btn-sm btn-danger delete-photocard" data-filename="${card.filename}" style="display:${isAdmin ? 'inline-block' : 'none'}"><i class="bi bi-trash"></i></button>
       </div>
       <div class="photocard-meta px-2 pb-2" style="font-size:0.95em;color:#bfc9db;">
         ${groupName ? `<span><i class='bi bi-people'></i> ${groupName}</span>` : ''}
@@ -170,6 +263,8 @@ async function renderGallery(photocards) {
       paginationContainer.appendChild(li);
     }
   }
+  // After rendering, update delete buttons
+  checkAdmin();
 }
 
 async function refreshGallery() {
@@ -192,9 +287,14 @@ uploadForm.addEventListener('submit', async (e) => {
   }
   formData.append('groupId', groupId);
   if (memberId) formData.append('memberId', memberId);
+  // Get JWT for Authorization header
+  const supabase = await window.supabasePromise;
+  const { data: sessionData } = await supabase.auth.getSession();
+  const jwt = sessionData?.session?.access_token;
   const res = await fetch('/api/photocards/upload', {
     method: 'POST',
-    body: formData
+    body: formData,
+    headers: jwt ? { Authorization: `Bearer ${jwt}` } : {},
   });
   let allSucceeded = false;
   if (res.ok) {
@@ -241,9 +341,16 @@ galleryContainer.addEventListener('click', async (e) => {
     const filename = e.target.closest('.delete-photocard').dataset.filename;
     if (!filename) return;
     if (!confirm('Delete this photocard?')) return;
+    // Get JWT for Authorization header
+    const supabase = await window.supabasePromise;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const jwt = sessionData?.session?.access_token;
     const res = await fetch('/api/photocards/delete', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(jwt ? { Authorization: `Bearer ${jwt}` } : {})
+      },
       body: JSON.stringify({ filename })
     });
     if (res.ok) {

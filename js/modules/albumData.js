@@ -2,33 +2,7 @@
 import { getCachedData, setCachedData, isDataDifferent } from "./cacheUtils.js";
 
 // Example album data with releaseDate (YYYY-MM-DD)
-export let albums = [
-  {
-    id: 1,
-    group: "BTS",
-    album: "MAP OF THE SOUL: 7",
-    releaseDate: "2020-02-21",
-    image: "",
-    versions: ["Standard", "Deluxe"],
-  },
-  {
-    id: 2,
-    group: "BLACKPINK",
-    album: "THE ALBUM",
-    releaseDate: "2020-10-02",
-    image: "",
-    versions: ["Standard"],
-  },
-  {
-    id: 3,
-    group: "TWICE",
-    album: "Eyes wide open",
-    releaseDate: "2020-10-26",
-    image: "",
-    versions: ["Standard"],
-  },
-  // Add more albums as needed
-];
+export let albums = [];
 export let groups = [];
 export let filterText = "";
 export let sortBy = "group";

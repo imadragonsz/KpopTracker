@@ -10,6 +10,7 @@ import {
 import { getCardWidth, getCardPageSize } from "../modules/paginationUtils.js";
 import { loadAllData, filterAlbums } from "../modules/browseData.js";
 import { addAlbumToUser, addGroupToUser } from "../api/browseApi.js";
+import { getCurrentUser } from "../auth.js";
 
 const browseResults = document.getElementById("browseResults");
 // Add a container for group cards row
@@ -86,62 +87,69 @@ function renderGroupCardsRow() {
     },
   });
   row.appendChild(allCol);
-  pageGroups.forEach((group) => {
-    const alreadyOwned = userGroups.some(
-      (ug) => ug.id === group.id || ug.name === group.name
-    );
-    const isSelected = selectedGroup === group.name;
-    const col = createCardCol({
-      width: cardWidth,
-      isSelected,
-      cardHtml: groupCardHtml(group, cardWidth, alreadyOwned, isSelected),
-      onClick: (e) => {
-        if (e.target.closest(".add-to-group-collection-btn")) return;
-        selectedGroup = group.name;
-        currentPage = 1;
-        renderGroupCardsRow();
-        renderResults();
-      },
+  (async () => {
+    const user = await getCurrentUser();
+    const isLoggedIn = !!user;
+    pageGroups.forEach((group) => {
+      const alreadyOwned = userGroups.some(
+        (ug) => ug.id === group.id || ug.name === group.name
+      );
+      const isSelected = selectedGroup === group.name;
+      const col = createCardCol({
+        width: cardWidth,
+        isSelected,
+        cardHtml: groupCardHtml(group, cardWidth, alreadyOwned, isSelected, isLoggedIn),
+        onClick: (e) => {
+          if (e.target.closest(".add-to-group-collection-btn")) return;
+          selectedGroup = group.name;
+          currentPage = 1;
+          renderGroupCardsRow();
+          renderResults();
+        },
+      });
+      row.appendChild(col);
     });
-    row.appendChild(col);
-  });
-  browseGroupCardsRow.appendChild(row);
-  // Pagination controls
-  const pagination = document.createElement("div");
-  pagination.className =
-    "d-flex justify-content-center align-items-center gap-2";
-  const totalGroupPagesDisplay = Math.max(
-    1,
-    Math.ceil(allGroups.length / groupPageSize)
-  );
-  pagination.innerHTML = `
-    <button class="btn btn-outline-secondary btn-sm" id="browsePrevGroupPage" ${
-      groupPage === 1 ? "disabled" : ""
-    }>Prev</button>
-    <span class="mx-2">Page ${groupPage} of ${totalGroupPagesDisplay}</span>
-    <button class="btn btn-outline-secondary btn-sm" id="browseNextGroupPage" ${
-      groupPage === totalGroupPagesDisplay ? "disabled" : ""
-    }>Next</button>
-  `;
-  browseGroupCardsRow.appendChild(pagination);
-  setTimeout(() => {
-    const prevBtn = document.getElementById("browsePrevGroupPage");
-    const nextBtn = document.getElementById("browseNextGroupPage");
-    if (prevBtn)
-      prevBtn.onclick = () => {
-        if (groupPage > 1) {
-          groupPage--;
-          renderGroupCardsRow();
-        }
-      };
-    if (nextBtn)
-      nextBtn.onclick = () => {
-        if (groupPage < totalGroupPagesDisplay) {
-          groupPage++;
-          renderGroupCardsRow();
-        }
-      };
-  }, 0);
+    browseGroupCardsRow.innerHTML = "";
+    browseGroupCardsRow.appendChild(row);
+    // Remove existing pagination controls before appending new one
+    Array.from(browseGroupCardsRow.querySelectorAll('.d-flex.justify-content-center.align-items-center.gap-2')).forEach(el => el.remove());
+    // Pagination controls (moved inside async block)
+    const pagination = document.createElement("div");
+    pagination.className =
+      "d-flex justify-content-center align-items-center gap-2";
+    const totalGroupPagesDisplay = Math.max(
+      1,
+      Math.ceil(allGroups.length / groupPageSize)
+    );
+    pagination.innerHTML = `
+      <button class="btn btn-outline-secondary btn-sm" id="browsePrevGroupPage" ${
+        groupPage === 1 ? "disabled" : ""
+      }>Prev</button>
+      <span class="mx-2">Page ${groupPage} of ${totalGroupPagesDisplay}</span>
+      <button class="btn btn-outline-secondary btn-sm" id="browseNextGroupPage" ${
+        groupPage === totalGroupPagesDisplay ? "disabled" : ""
+      }>Next</button>
+    `;
+    browseGroupCardsRow.appendChild(pagination);
+    setTimeout(() => {
+      const prevBtn = document.getElementById("browsePrevGroupPage");
+      const nextBtn = document.getElementById("browseNextGroupPage");
+      if (prevBtn)
+        prevBtn.onclick = () => {
+          if (groupPage > 1) {
+            groupPage--;
+            renderGroupCardsRow();
+          }
+        };
+      if (nextBtn)
+        nextBtn.onclick = () => {
+          if (groupPage < totalGroupPagesDisplay) {
+            groupPage++;
+            renderGroupCardsRow();
+          }
+        };
+    }, 0);
+  })();
 }
 
 function renderResults() {
@@ -163,69 +171,76 @@ function renderResults() {
   }
   const cardWidth = getCardWidth();
   const row = createFlexRow();
-  pageAlbums.forEach((album) => {
-    const alreadyOwned = userAlbums.some(
-      (ua) =>
-        ua.id === album.id ||
-        (ua.album === album.album && ua.group === album.group)
-    );
-    const col = createCardCol({
-      width: cardWidth,
-      cardHtml: albumCardHtml(album, cardWidth, alreadyOwned),
-      onClick: async (e) => {
-        if (e.target.closest(".add-to-collection-btn")) {
-          return;
-        }
-        try {
-          const { showAlbumInfoModal } = await import(
-            "../components/albumModals.js"
-          );
-          showAlbumInfoModal(album);
-          const modalEl = document.getElementById("albumInfoModal");
-          if (modalEl && window.bootstrap && window.bootstrap.Modal) {
-            const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
+  (async () => {
+    const user = await getCurrentUser();
+    const isLoggedIn = !!user;
+    pageAlbums.forEach((album) => {
+      const alreadyOwned = userAlbums.some(
+        (ua) =>
+          ua.id === album.id ||
+          (ua.album === album.album && ua.group === album.group)
+      );
+      const col = createCardCol({
+        width: cardWidth,
+        cardHtml: albumCardHtml(album, cardWidth, alreadyOwned, isLoggedIn),
+        onClick: async (e) => {
+          if (e.target.closest(".add-to-collection-btn")) {
+            return;
           }
-        } catch (err) {
-          console.error("[BrowsePage] Error opening album info modal:", err);
-        }
-      },
+          try {
+            const { showAlbumInfoModal } = await import(
+              "../components/albumModals.js"
+            );
+            showAlbumInfoModal(album);
+            const modalEl = document.getElementById("albumInfoModal");
+            if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+              const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+              modal.show();
+            }
+          } catch (err) {
+            console.error("[BrowsePage] Error opening album info modal:", err);
+          }
+        },
+      });
+      row.appendChild(col);
     });
-    row.appendChild(col);
-  });
-  browseResults.appendChild(row);
-  // Pagination controls
-  const pagination = document.createElement("div");
-  pagination.className =
-    "d-flex justify-content-center align-items-center gap-2";
-  pagination.innerHTML = `
-    <button class="btn btn-outline-secondary btn-sm" id="browsePrevPage" ${
-      currentPage === 1 ? "disabled" : ""
-    }>Prev</button>
-    <span class="mx-2">Page ${currentPage} of ${totalPages}</span>
-    <button class="btn btn-outline-secondary btn-sm" id="browseNextPage" ${
-      currentPage === totalPages ? "disabled" : ""
-    }>Next</button>
-  `;
-  browseResults.appendChild(pagination);
-  setTimeout(() => {
-    const prevBtn = document.getElementById("browsePrevPage");
-    const nextBtn = document.getElementById("browseNextPage");
-    if (prevBtn)
-      prevBtn.onclick = () => {
-        if (currentPage > 1) {
-          currentPage--;
-          renderResults();
-        }
-      };
-    if (nextBtn)
-      nextBtn.onclick = () => {
-        if (currentPage < totalPages) {
-          currentPage++;
-          renderResults();
-        }
-      };
-  }, 0);
+    browseResults.innerHTML = "";
+    browseResults.appendChild(row);
+    // Remove existing pagination controls before appending new one
+    Array.from(browseResults.querySelectorAll('.d-flex.justify-content-center.align-items-center.gap-2')).forEach(el => el.remove());
+    // Pagination controls (moved inside async block)
+    const pagination = document.createElement("div");
+    pagination.className =
+      "d-flex justify-content-center align-items-center gap-2";
+    pagination.innerHTML = `
+      <button class="btn btn-outline-secondary btn-sm" id="browsePrevPage" ${
+        currentPage === 1 ? "disabled" : ""
+      }>Prev</button>
+      <span class="mx-2">Page ${currentPage} of ${totalPages}</span>
+      <button class="btn btn-outline-secondary btn-sm" id="browseNextPage" ${
+        currentPage === totalPages ? "disabled" : ""
+      }>Next</button>
+    `;
+    browseResults.appendChild(pagination);
+    setTimeout(() => {
+      const prevBtn = document.getElementById("browsePrevPage");
+      const nextBtn = document.getElementById("browseNextPage");
+      if (prevBtn)
+        prevBtn.onclick = () => {
+          if (currentPage > 1) {
+            currentPage--;
+            renderResults();
+          }
+        };
+      if (nextBtn)
+        nextBtn.onclick = () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            renderResults();
+          }
+        };
+    }, 0);
+  })();
 }
 
 // Album add-to-collection
@@ -245,7 +260,7 @@ browseResults.addEventListener("click", async (e) => {
     } else if (result.error && result.error.code === "23505") {
       btn.textContent = "Already in your collection";
     } else {
-      btn.textContent = "Error";
+      btn.textContent = "Login plz";
     }
     setTimeout(() => {
       btn.textContent = "Add to My Collection";
@@ -270,7 +285,7 @@ browseGroupCardsRow.addEventListener("click", async (e) => {
     } else if (result.error && result.error.code === "23505") {
       btn.textContent = "Already in your collection";
     } else {
-      btn.textContent = "Error";
+      btn.textContent = "Login plz";
     }
     setTimeout(() => {
       btn.textContent = "Add Group";

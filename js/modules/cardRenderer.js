@@ -1,7 +1,7 @@
 // cardRenderer.js
 // Functions to generate card HTML for albums and groups
 
-export function albumCardHtml(album, cardWidth, alreadyOwned) {
+export function albumCardHtml(album, cardWidth, alreadyOwned, isLoggedIn = true) {
   return `
     <div class="card h-100 shadow-sm" style="width: ${cardWidth}px; cursor:pointer;">
       <img src="${
@@ -16,16 +16,18 @@ export function albumCardHtml(album, cardWidth, alreadyOwned) {
           album.releaseDate || album.year
         }</p>
         ${
-          alreadyOwned
-            ? '<div class="alert alert-success py-1 px-2 mb-2">Already in your collection</div>'
-            : `<button class="btn btn-info btn-sm mt-auto add-to-collection-btn" data-album-id="${album.id}">Add to My Collection</button>`
+          !isLoggedIn
+            ? ''
+            : alreadyOwned
+              ? '<div class="alert alert-success py-1 px-2 mb-2">Already in your collection</div>'
+              : `<button class="btn btn-info btn-sm mt-auto add-to-collection-btn" data-album-id="${album.id}">Add to My Collection</button>`
         }
       </div>
     </div>
   `;
 }
 
-export function groupCardHtml(group, cardWidth, alreadyOwned, isSelected) {
+export function groupCardHtml(group, cardWidth, alreadyOwned, isSelected, isLoggedIn = true) {
   return `
     <div class="card h-100 shadow-sm${
       isSelected ? " border-primary border-2" : ""
@@ -39,9 +41,11 @@ export function groupCardHtml(group, cardWidth, alreadyOwned, isSelected) {
           group.debutDate || group.debut_year || "—"
         }</p>
         ${
-          alreadyOwned
-            ? '<div class="alert alert-success py-1 px-2 mb-2">Already in your collection</div>'
-            : `<button class="btn btn-info btn-sm mt-auto add-to-group-collection-btn" data-group-id="${group.id}">Add Group</button>`
+          !isLoggedIn
+            ? ''
+            : alreadyOwned
+              ? '<div class="alert alert-success py-1 px-2 mb-2">Already in your collection</div>'
+              : `<button class="btn btn-info btn-sm mt-auto add-to-group-collection-btn" data-group-id="${group.id}">Add Group</button>`
         }
       </div>
     </div>

@@ -1,8 +1,18 @@
 // Gallery management modal: select and delete images
-export function showGalleryManagementModal({
+import { checkAdminStatus } from "./adminCheck.js";
+export async function showGalleryManagementModal({
   title = "Manage Gallery Images",
   groupName = null,
 } = {}) {
+  // Debug: Log entry and check admin status
+  console.log("[GalleryManagementModal] Checking admin status...");
+  const isAdmin = await checkAdminStatus();
+  console.log("[GalleryManagementModal] Admin check result:", isAdmin);
+  if (!isAdmin) {
+    console.warn("[GalleryManagementModal] User is not admin. Blocking access.");
+    alert("You must be an admin to manage the gallery.");
+    return;
+  }
   let modal = document.getElementById("galleryManagementModal");
   if (!modal) {
     modal = document.createElement("div");
@@ -20,8 +30,7 @@ export function showGalleryManagementModal({
             <div class="d-flex flex-wrap align-items-end justify-content-between mb-3 gap-2">
               <div style="min-width:220px;">
                 <label for="galleryGroupInput" class="form-label mb-1">Group</label>
-                <input id="galleryGroupInput" class="form-control bg-dark text-info border-info" list="galleryGroupDatalist" placeholder="Type or select a group...">
-                <datalist id="galleryGroupDatalist"></datalist>
+                <select id="galleryGroupInput" class="form-control bg-dark text-info border-info"></select>
               </div>
               <form id="galleryUploadForm" class="d-flex align-items-end gap-2 flex-wrap" enctype="multipart/form-data" style="min-width:260px;">
                 <div class="input-group">
@@ -49,7 +58,6 @@ export function showGalleryManagementModal({
   const pagination = modal.querySelector("#galleryManagementPagination");
   const deleteBtn = modal.querySelector("#deleteSelectedImagesBtn");
   const groupInput = modal.querySelector("#galleryGroupInput");
-  const groupDatalist = modal.querySelector("#galleryGroupDatalist");
   const uploadForm = modal.querySelector("#galleryUploadForm");
   const uploadInput = modal.querySelector("#galleryUploadInput");
   const uploadStatus = modal.querySelector("#galleryUploadStatus");
@@ -211,15 +219,68 @@ export function showGalleryManagementModal({
 
   function renderGroupFolders() {
     // Update datalist for group suggestions
-    groupDatalist.innerHTML = "";
-    groupNames.forEach((g) => {
-      const option = document.createElement("option");
-      option.value = g;
-      groupDatalist.appendChild(option);
-    });
-    // Set input value to selectedGroup
-    if (groupInput.value !== selectedGroup)
-      groupInput.value = selectedGroup || "";
+    // Populate select with group options
+    groupInput.innerHTML = groupNames.map(g => `<option value="${g}">${g}</option>`).join("");
+    // Set selected value
+    groupInput.value = selectedGroup || "";
+    // Initialize Choices.js if not already
+    if (!groupInput.choicesInstance) {
+      if (window.Choices) {
+        groupInput.choicesInstance = new window.Choices(groupInput, {
+          searchEnabled: true,
+          itemSelectText: '',
+          shouldSort: false,
+          placeholder: true,
+          placeholderValue: 'Select or search group...'
+        });
+        // Inject dark theme CSS if not already present
+        if (!document.getElementById('choices-dark-theme')) {
+          const style = document.createElement('style');
+          style.id = 'choices-dark-theme';
+          style.textContent = `
+            .choices.choices-dark, .choices.choices-dark .choices__inner, .choices.choices-dark .choices__list--dropdown, .choices.choices-dark .choices__list[aria-expanded] {
+              background: #181a20 !important;
+              color: #e0e0e0 !important;
+              border-color: #43c6ac !important;
+            }
+            .choices.choices-dark .choices__item--selectable, .choices.choices-dark .choices__item {
+              color: #e0e0e0 !important;
+              background: #181a20 !important;
+            }
+            .choices.choices-dark .choices__item--selectable.is-highlighted, .choices.choices-dark .choices__item--selectable.is-selected {
+              background: #23272f !important;
+              color: #43c6ac !important;
+            }
+            .choices.choices-dark .choices__input {
+              background: #181a20 !important;
+              color: #e0e0e0 !important;
+            }
+            .choices.choices-dark .choices__placeholder {
+              color: #43c6ac !important;
+              opacity: 1 !important;
+            }
+            .choices.choices-dark .choices__list--dropdown .choices__item--selectable {
+              border-bottom: 1px solid #23272f !important;
+            }
+            .choices.choices-dark .choices__list--dropdown {
+              box-shadow: 0 4px 24px #43c6ac33 !important;
+            }
+          `;
+          document.head.appendChild(style);
+        }
+        // Add .choices-dark to the parent .choices container
+        setTimeout(() => {
+          const container = groupInput.closest('.choices') || groupInput.parentNode.querySelector('.choices');
+          if (container) container.classList.add('choices-dark');
+        }, 0);
+      }
+    } else {
+      groupInput.choicesInstance.setChoices(
+        groupNames.map(g => ({ value: g, label: g })),
+        'value', 'label', true
+      );
+      groupInput.choicesInstance.setChoiceByValue(selectedGroup || "");
+    }
   }
 
   function updateGalleryView() {
@@ -245,13 +306,9 @@ export function showGalleryManagementModal({
     });
 
   // Group input change handler
-  groupInput.addEventListener("input", () => {
-    // Case-insensitive group lookup
-    const inputVal = groupInput.value.trim();
-    const found = groupNames.find(
-      (g) => g.toLowerCase() === inputVal.toLowerCase()
-    );
-    selectedGroup = found || inputVal;
+  groupInput.addEventListener("change", () => {
+    const val = groupInput.value;
+    selectedGroup = val;
     page = 1;
     selectedImages.clear();
     updateGalleryView();
@@ -336,7 +393,7 @@ export function showGalleryManagementModal({
 // galleryModal.js
 // Shows a modal with a gallery of available images and an upload option
 
-export function showGalleryModal({
+export async function showGalleryModal({
   onSelect,
   title = "Select or Upload Image",
   groupName = null,
@@ -355,6 +412,12 @@ export function showGalleryModal({
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+            <div class="d-flex flex-wrap align-items-end justify-content-between mb-3 gap-2">
+              <div style="min-width:220px;">
+                <label for="galleryModalGroupInput" class="form-label mb-1">Group</label>
+                <select id="galleryModalGroupInput" class="form-control bg-dark text-info border-info"></select>
+              </div>
+            </div>
             <div id="galleryModalStatus" class="mb-2 text-info"></div>
             <div id="galleryModalGallery" class="row g-3 mb-3"></div>
             <div id="galleryModalPagination" class="mb-3 d-flex justify-content-center align-items-center" style="gap:8px;"></div>
@@ -378,6 +441,8 @@ export function showGalleryModal({
   const gallery = modal.querySelector("#galleryModalGallery");
   const status = modal.querySelector("#galleryModalStatus");
   const pagination = modal.querySelector("#galleryModalPagination");
+  const groupInput = modal.querySelector("#galleryModalGroupInput");
+  groupInput.classList.add('choices-dark');
 
   let imagesByGroup = {};
   let groupNames = [];
@@ -507,34 +572,72 @@ export function showGalleryModal({
     }
   }
 
-  function renderGroupFolders() {
-    // Show group folders as buttons
-    const folderBar = document.createElement("div");
-    folderBar.className = "mb-3 d-flex flex-wrap align-items-center";
-    groupNames.forEach((g) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = `btn btn-sm me-2 mb-2 ${
-        selectedGroup === g ? "btn-info" : "btn-outline-info"
-      }`;
-      btn.textContent = g;
-      btn.onclick = () => {
-        selectedGroup = g;
-        page = 1;
-        updateGalleryView();
-      };
-      folderBar.appendChild(btn);
-    });
-    gallery.parentNode.insertBefore(folderBar, gallery);
+  function renderGroupDropdown() {
+    // Populate select with group options
+    groupInput.innerHTML = groupNames.map(g => `<option value="${g}">${g}</option>`).join("");
+    groupInput.value = selectedGroup || "";
+    // Initialize Choices.js if not already
+    if (!groupInput.choicesInstance) {
+      if (window.Choices) {
+        groupInput.choicesInstance = new window.Choices(groupInput, {
+          searchEnabled: true,
+          itemSelectText: '',
+          shouldSort: false,
+          placeholder: true,
+          placeholderValue: 'Select or search group...'
+        });
+        // Inject dark theme CSS if not already present
+        if (!document.getElementById('choices-dark-theme')) {
+          const style = document.createElement('style');
+          style.id = 'choices-dark-theme';
+          style.textContent = `
+            .choices.choices-dark, .choices.choices-dark .choices__inner, .choices.choices-dark .choices__list--dropdown, .choices.choices-dark .choices__list[aria-expanded] {
+              background: #181a20 !important;
+              color: #e0e0e0 !important;
+              border-color: #43c6ac !important;
+            }
+            .choices.choices-dark .choices__item--selectable, .choices.choices-dark .choices__item {
+              color: #e0e0e0 !important;
+              background: #181a20 !important;
+            }
+            .choices.choices-dark .choices__item--selectable.is-highlighted, .choices.choices-dark .choices__item--selectable.is-selected {
+              background: #23272f !important;
+              color: #43c6ac !important;
+            }
+            .choices.choices-dark .choices__input {
+              background: #181a20 !important;
+              color: #e0e0e0 !important;
+            }
+            .choices.choices-dark .choices__placeholder {
+              color: #43c6ac !important;
+              opacity: 1 !important;
+            }
+            .choices.choices-dark .choices__list--dropdown .choices__item--selectable {
+              border-bottom: 1px solid #23272f !important;
+            }
+            .choices.choices-dark .choices__list--dropdown {
+              box-shadow: 0 4px 24px #43c6ac33 !important;
+            }
+          `;
+          document.head.appendChild(style);
+        }
+        // Add .choices-dark to the parent .choices container
+        setTimeout(() => {
+          const container = groupInput.closest('.choices') || groupInput.parentNode.querySelector('.choices');
+          if (container) container.classList.add('choices-dark');
+        }, 0);
+      }
+    } else {
+      groupInput.choicesInstance.setChoices(
+        groupNames.map(g => ({ value: g, label: g })),
+        'value', 'label', true
+      );
+      groupInput.choicesInstance.setChoiceByValue(selectedGroup || "");
+    }
   }
 
   function updateGalleryView() {
-    // Remove any existing folder bar
-    const prevBar = gallery.parentNode.querySelector(
-      ".mb-3.d-flex.flex-wrap.align-items-center"
-    );
-    if (prevBar) prevBar.remove();
-    renderGroupFolders();
+    renderGroupDropdown();
     renderGallery();
   }
 
@@ -554,6 +657,14 @@ export function showGalleryModal({
       page = 1;
       updateGalleryView();
     });
+
+  // Group input change handler
+  groupInput.addEventListener("change", () => {
+    const val = groupInput.value;
+    selectedGroup = val;
+    page = 1;
+    updateGalleryView();
+  });
 
   // Handle upload
   const uploadForm = modal.querySelector("#galleryModalUploadForm");

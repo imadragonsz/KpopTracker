@@ -20,6 +20,36 @@
     />
     <link rel="stylesheet" href="/styles/animations.css" />
     <link rel="stylesheet" href="../styles/flatpickr-dark.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <style id="choices-dark-theme">
+      .choices.choices-dark, .choices.choices-dark .choices__inner, .choices.choices-dark .choices__list--dropdown, .choices.choices-dark .choices__list[aria-expanded] {
+        background: #181a20 !important;
+        color: #e0e0e0 !important;
+        border-color: #43c6ac !important;
+      }
+      .choices.choices-dark .choices__item--selectable, .choices.choices-dark .choices__item {
+        color: #e0e0e0 !important;
+        background: #181a20 !important;
+      }
+      .choices.choices-dark .choices__item--selectable.is-highlighted, .choices.choices-dark .choices__item--selectable.is-selected {
+        background: #23272f !important;
+        color: #43c6ac !important;
+      }
+      .choices.choices-dark .choices__input {
+        background: #181a20 !important;
+        color: #e0e0e0 !important;
+      }
+      .choices.choices-dark .choices__placeholder {
+        color: #43c6ac !important;
+        opacity: 1 !important;
+      }
+      .choices.choices-dark .choices__list--dropdown .choices__item--selectable {
+        border-bottom: 1px solid #23272f !important;
+      }
+      .choices.choices-dark .choices__list--dropdown {
+        box-shadow: 0 4px 24px #43c6ac33 !important;
+      }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
   </head>
   <body
@@ -676,5 +706,6 @@
         }
       })();
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   </body>
 </html>

@@ -178,9 +178,13 @@ async function loadProfile() {
     const loginBtn = document.getElementById("profile-login-btn");
     if (loginBtn) {
       loginBtn.onclick = () => {
-        // Try to trigger login modal if available
-        const navLoginBtn = document.getElementById("loginBtn");
-        if (navLoginBtn) navLoginBtn.click();
+        // Prefer direct modal if available
+        if (typeof window.showLoginModal === 'function') {
+          window.showLoginModal();
+        } else {
+          const navLoginBtn = document.getElementById("loginBtn");
+          if (navLoginBtn) navLoginBtn.click();
+        }
       };
     }
     hideLoading();

@@ -29,11 +29,17 @@ function renderUserMenuModal(isLoggedIn, email) {
         <button id="logoutBtnModal" class="btn btn-outline-secondary">Logout</button>
       </div>
     `;
-    const logoutBtn = document.getElementById("logoutBtnModal");
-    if (logoutBtn) {
-      logoutBtn.onclick = async function () {
-        try {
-          if (window.signOut) {
+    console.debug('[renderUserMenuModal] Rendering for logged-in user:', email);
+    function attachLogoutHandler(tries = 0) {
+      const logoutBtn = document.getElementById("logoutBtnModal");
+      if (!logoutBtn) {
+        console.debug('[renderUserMenuModal] logoutBtnModal not found, try:', tries);
+        return;
+      }
+      if (window.signOut) {
+        console.debug('[renderUserMenuModal] Attaching logout handler for', email);
+        logoutBtn.onclick = async function () {
+          try {
             await window.signOut();
             const modalElem = document.getElementById("userMenuModal");
             if (modalElem && window.bootstrap) {
@@ -47,13 +53,35 @@ function renderUserMenuModal(isLoggedIn, email) {
             document.body.classList.remove("modal-open");
             document.body.style.overflow = "";
             document.body.style.paddingRight = "";
+            // Reload the page to update all UI, but also update navbar immediately in case reload is prevented
+            // Clear user email from localStorage and UI before reload
+            try {
+              localStorage.setItem('user-email', '-');
+              const userEmailSpan = document.getElementById('userEmail');
+              if (userEmailSpan) {
+                userEmailSpan.textContent = '';
+                userEmailSpan.style.display = 'none';
+              }
+            } catch (e) {}
+            if (typeof window.updateAuthUI === 'function') {
+              window.updateAuthUI();
+            }
             window.location.reload();
+          } catch (err) {
+            alert("Logout failed. Please try again.");
           }
-        } catch (err) {
-          alert("Logout failed. Please try again.");
-        }
-      };
+        };
+      } else if (tries < 10) {
+        console.debug('[renderUserMenuModal] window.signOut not ready, retrying...', tries);
+        setTimeout(() => attachLogoutHandler(tries + 1), 100);
+      } else {
+        console.warn('[renderUserMenuModal] Logout unavailable after retries for', email);
+        logoutBtn.onclick = function () {
+          alert("Logout is temporarily unavailable. Please try again later.");
+        };
+      }
     }
+    attachLogoutHandler();
   } else {
     body.innerHTML = `
       <div class="mb-3 text-center">
