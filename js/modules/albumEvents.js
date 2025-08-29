@@ -274,13 +274,21 @@ export function setupAlbumEventHandlers() {
   // Add version to edit modal (always add, never edit/replace)
   document.addEventListener("click", async function (e) {
     if (e.target && e.target.id === "addEditVersionBtn") {
+      console.log("[addEditVersionBtn] Button pressed");
       const input = document.getElementById("editVersionInput");
       const onTheWay = document.getElementById("editVersionOnTheWay");
       const list = document.getElementById("editVersionsList");
-      if (!input || !list) return;
+      if (!input || !list) {
+        console.warn("[addEditVersionBtn] Missing input or list element", { input, list });
+        return;
+      }
       const val = input.value.trim();
-      if (!val) return;
-      let versionsArr = list._versionsArr || [];
+      if (!val) {
+        console.warn("[addEditVersionBtn] No value entered in input");
+        return;
+      }
+  let versionsArr = list._versionsArr || [];
+  console.log("[addEditVersionBtn] Current versionsArr before update:", versionsArr);
       // If editing, update the version at the index
       if (typeof list._editIdx === "number") {
         // Prevent duplicates except for the one being edited
@@ -296,9 +304,13 @@ export function setupAlbumEventHandlers() {
           input.focus();
           return;
         }
+        // Preserve notes and trackingCode if present, else default to empty string
+        const prev = versionsArr[list._editIdx] || {};
         versionsArr[list._editIdx] = {
           name: val,
           onTheWay: onTheWay && onTheWay.checked,
+          notes: prev.notes || "",
+          trackingCode: prev.trackingCode || ""
         };
         list._editIdx = undefined;
       } else {
@@ -313,37 +325,28 @@ export function setupAlbumEventHandlers() {
         }
         versionsArr = [
           ...versionsArr,
-          { name: val, onTheWay: onTheWay && onTheWay.checked },
+          { name: val, onTheWay: onTheWay && onTheWay.checked, notes: "", trackingCode: "" },
         ];
       }
-      list._versionsArr = versionsArr;
-      renderVersionList(list, versionsArr);
-      // Immediately update the database
-      // Find the album being edited
+  list._versionsArr = versionsArr;
+  renderVersionList(list, versionsArr);
+  console.log("[addEditVersionBtn] Updated versionsArr:", versionsArr);
+      // Immediately update the user's album versions in the database
       const modalElem = document.getElementById("editAlbumModal");
       const albumId = modalElem && modalElem.getAttribute("data-edit-id");
+      console.log("[addEditVersionBtn] albumId:", albumId);
       if (albumId) {
-        const album = albums.find((a) => String(a.id) === String(albumId));
-        if (album) {
-          try {
-            const { updateAlbum } = await import("../api/albumApi.js");
-            await updateAlbum(album.id, {
-              group: album.group,
-              album: album.album,
-              releaseDate: album.releaseDate,
-              image: album.image,
-              onTheWay: album.onTheWay,
-              versions: versionsArr,
-            });
-          } catch (err) {
-            console.error(
-              "[addEditVersionBtn] Failed to update album versions in database:",
-              err
-            );
-            alert("Failed to update album versions in database.");
-          }
-        } else {
-          console.warn("[addEditVersionBtn] Album not found for id:", albumId);
+        try {
+          const { upsertUserAlbumVersions } = await import("../api/userAlbumVersionsApi.js");
+          console.log("[addEditVersionBtn] Calling upsertUserAlbumVersions with:", albumId, versionsArr);
+          const result = await upsertUserAlbumVersions(albumId, versionsArr);
+          console.log("[addEditVersionBtn] upsertUserAlbumVersions result:", result);
+        } catch (err) {
+          console.error(
+            "[addEditVersionBtn] Failed to upsert user album versions:",
+            err
+          );
+          alert("Failed to update your album versions.");
         }
       } else {
         console.warn("[addEditVersionBtn] No albumId found on editAlbumModal");

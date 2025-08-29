@@ -1,3 +1,35 @@
+// Remove a version by index for the current user and album
+export async function removeUserAlbumVersion(albumId, versionIdx) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "No user" };
+  const supabase = await supabasePromise;
+  // Fetch current versions
+  const { data, error: fetchError } = await supabase
+    .from("user_album_versions")
+    .select("versions")
+    .eq("user_id", user.id)
+    .eq("album_id", albumId)
+    .single();
+  if (fetchError || !data || !Array.isArray(data.versions)) {
+    return { error: fetchError || "No versions found" };
+  }
+  const versions = [...data.versions];
+  if (versionIdx < 0 || versionIdx >= versions.length) {
+    return { error: "Invalid version index" };
+  }
+  versions.splice(versionIdx, 1);
+  // Update the row with the new versions array
+  const { error: updateError } = await supabase.from("user_album_versions").upsert(
+    {
+      user_id: user.id,
+      album_id: albumId,
+      versions: versions,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: ["user_id", "album_id"] }
+  );
+  return { error: updateError };
+}
 // Batch fetch all user album versions for a list of album IDs
 export async function fetchUserAlbumVersionsBatch(albumIds) {
   const user = await getCurrentUser();

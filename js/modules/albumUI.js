@@ -1,6 +1,122 @@
+// Open albumVersionModal.js when clicking on a version badge in the album card or edit modal
+document.addEventListener("click", async function (e) {
+  const badge = e.target.closest('.badge.bg-info.text-dark.me-1.mb-1.d-inline-flex.align-items-center.justify-content-center');
+  if (!badge) return;
+  // If in edit modal, handled as before
+  if (badge.parentElement && badge.parentElement.id === "editVersionsList") {
+    const badges = Array.from(badge.parentElement.querySelectorAll('.badge.bg-info.text-dark.me-1.mb-1.d-inline-flex.align-items-center.justify-content-center'));
+    const idx = badges.indexOf(badge);
+    if (idx !== -1) {
+      const list = badge.parentElement;
+      const versionsArr = list._versionsArr || [];
+      const version = versionsArr[idx];
+      const { showAlbumVersionModal } = await import("../components/albumVersionModal.js");
+      showAlbumVersionModal(version, function(updatedData) {
+        versionsArr[idx] = { ...version, ...updatedData };
+        list._versionsArr = versionsArr;
+      });
+    }
+    return;
+  }
+  // If in album card (version-list), find album and version index
+  const versionList = badge.closest('.version-list');
+  if (versionList && versionList.parentElement) {
+    // Find the album card element
+    const albumCard = badge.closest('.album-list-item');
+    if (!albumCard) return;
+    const albumId = albumCard.getAttribute('data-album-id');
+    if (!albumId) return;
+    // Find the index of the badge in the version-list
+    const badges = Array.from(versionList.querySelectorAll('.badge.bg-info.text-dark.me-1.mb-1.d-inline-flex.align-items-center.justify-content-center'));
+    const idx = badges.indexOf(badge);
+    if (idx === -1) return;
+    // Get the correct version from userVersionsMap
+    let userVersions = userVersionsMap[albumId] || [];
+    // Account for pagination
+    let page = 1;
+    const album = (Array.isArray(lastRenderList) ? lastRenderList : albums).find(a => String(a.id) === String(albumId));
+    if (album && album._versionPage) page = album._versionPage;
+    const start = (page - 1) * (window.VERSIONS_PER_PAGE || 4);
+    const version = userVersions[start + idx];
+    if (!version) return;
+    const { showAlbumVersionModal } = await import("../components/albumVersionModal.js");
+    showAlbumVersionModal(version, function(updatedData) {
+      userVersions[start + idx] = { ...version, ...updatedData };
+      userVersionsMap[albumId] = userVersions;
+      // Optionally, trigger a save or re-render here
+    });
+  }
+});
 // Render a list of album versions into a given DOM element
 export function renderVersionList(container, versionsArr = []) {
   if (!container) return;
+  // Render with remove button if in edit modal
+  if (container.id === "editVersionsList") {
+    container.innerHTML =
+      versionsArr && versionsArr.length
+        ? versionsArr
+            .map((v, idx) => {
+              let obj = v;
+              if (
+                typeof v === "string" &&
+                v.trim().startsWith("{") &&
+                v.trim().endsWith("}")
+              ) {
+                try {
+                  obj = JSON.parse(v);
+                } catch (e) {
+                  obj = v;
+                }
+              }
+              if (typeof obj === "string") {
+                return `<span class='badge bg-info text-dark me-1 mb-1 d-inline-flex align-items-center justify-content-center'>${obj}
+                  <button type='button' class='btn btn-sm btn-danger btn-remove-version ms-2' data-version-idx='${idx}' title='Remove version' style='padding:0 6px 0 6px;line-height:1.1;font-size:0.95em;'>&times;</button>
+                </span>`;
+              } else if (
+                obj &&
+                typeof obj === "object" &&
+                typeof obj.name === "string"
+              ) {
+                return `<span class='badge bg-info text-dark me-1 mb-1 d-inline-flex align-items-center justify-content-center' style='min-width:90px;min-height:32px;vertical-align:middle;'>${
+                  obj.name
+                }${
+                  obj.onTheWay
+                    ? " <span class='badge bg-warning text-dark ms-1 d-inline-flex align-items-center justify-content-center' style='font-size:0.85em;height:24px;vertical-align:middle;'>On the Way</span>"
+                    : ""
+                }<button type='button' class='btn btn-sm btn-danger btn-remove-version ms-2' data-version-idx='${idx}' title='Remove version' style='padding:0 6px 0 6px;line-height:1.1;font-size:0.95em;'>&times;</button></span>`;
+              } else {
+                return `<span class='badge bg-secondary text-light me-1 mb-1'>Unknown Version</span>`;
+              }
+            })
+            .join("")
+        : "<span class='album-card-version-placeholder'>&nbsp;</span>";
+    // Add event listeners for remove buttons
+    container.querySelectorAll('.btn-remove-version').forEach(btn => {
+      btn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        const idx = parseInt(btn.getAttribute('data-version-idx'));
+        if (isNaN(idx)) return;
+        // Remove from array
+        versionsArr.splice(idx, 1);
+        container._versionsArr = versionsArr;
+        // Persist to backend if possible
+        const modalElem = document.getElementById("editAlbumModal");
+        const albumId = modalElem && modalElem.getAttribute("data-edit-id");
+        if (albumId) {
+          try {
+            const { upsertUserAlbumVersions } = await import("../api/userAlbumVersionsApi.js");
+            await upsertUserAlbumVersions(albumId, versionsArr);
+          } catch (err) {
+            alert("Failed to update album versions.");
+          }
+        }
+        // Re-render
+        renderVersionList(container, versionsArr);
+      });
+    });
+    return;
+  }
+  // Default rendering for other lists
   container.innerHTML =
     versionsArr && versionsArr.length
       ? versionsArr
