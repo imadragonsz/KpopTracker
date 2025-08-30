@@ -235,7 +235,11 @@ async function renderGallery(photocards) {
     if (card.groupId) groupName = await getGroupName(card.groupId);
     if (card.groupId && card.memberId) memberName = await getMemberName(card.groupId, card.memberId);
     item.innerHTML = `
-      <img src="${card.url}" class="photocard-img" alt="Photocard" loading="lazy" />
+      <img src="${card.url}"
+        srcset="${card.url} 600w, ${card.url} 900w, ${card.url} 1200w"
+        sizes="(max-width: 600px) 90vw, (max-width: 900px) 45vw, 300px"
+        width="150" height="225"
+        class="photocard-img" alt="Photocard" loading="lazy" />
       <div class="photocard-actions">
         <span class="photocard-filename">${card.originalname}</span>
         <button class="btn btn-sm btn-danger delete-photocard" data-filename="${card.filename}" style="display:${isAdmin ? 'inline-block' : 'none'}"><i class="bi bi-trash"></i></button>

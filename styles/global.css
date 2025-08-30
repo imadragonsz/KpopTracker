@@ -1,48 +1,4 @@
-@media (max-width: 576px) {
-  #groupList .list-group-item {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5em;
-  }
-  #groupList .edit-group-btn,
-  #groupList .remove-group-btn {
-    width: 100%;
-    min-width: 0;
-    margin-bottom: 0.3em;
-    white-space: normal;
-    word-break: break-word;
-  }
-}
-@media (max-width: 576px) {
-  .container,
-  .container-fluid {
-    width: 100% !important;
-    max-width: 100vw !important;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
-    /* Do NOT set overflow-x: auto here, it breaks navbar collapse */
-  }
-  .row,
-  [class^="col-"] {
-    width: 100% !important;
-    max-width: 100vw !important;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
-    overflow-x: auto !important;
-  }
-  table {
-    width: 100% !important;
-    max-width: 100vw !important;
-    display: block;
-    overflow-x: auto;
-  }
-  th,
-  td {
-    word-break: break-word !important;
-    overflow-wrap: break-word !important;
-  }
-}
+/* Removed unused selectors for photocardGallery.html */
 /* Flex child for sticky footer layout */
 .main-content {
   flex: 1 0 auto;

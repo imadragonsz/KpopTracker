@@ -3,6 +3,7 @@ require('dotenv').config();
 
 // --- Required modules (must be at the top) ---
 const express = require("express");
+const sharp = require("sharp");
 const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
@@ -103,12 +104,28 @@ async function requireAdmin(req, res, next) {
 }
 
 // Upload one or more photocards
-app.post("/api/photocards/upload", requireAdmin, photocardUpload.array("photocard"), (req, res) => {
+app.post("/api/photocards/upload", requireAdmin, photocardUpload.array("photocard"), async (req, res) => {
   if (!req.files || !req.files.length) return res.status(400).json({ error: "No file(s) uploaded." });
   const groupId = req.body.groupId || null;
   const memberId = req.body.memberId || null;
   const results = [];
   for (const file of req.files) {
+    let optimizedPath = file.path + ".webp";
+    try {
+      // Optimize: resize to max 1200x1200, convert to webp, quality 80
+      await sharp(file.path)
+        .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toFile(optimizedPath);
+      fs.unlinkSync(file.path); // Remove original
+      // Rename .webp to original filename (remove .webp extension)
+      const finalPath = file.path;
+      fs.renameSync(optimizedPath, finalPath);
+      file.mimetype = 'image/webp';
+      file.size = fs.statSync(finalPath).size;
+    } catch (err) {
+      console.error('Image optimization failed:', err);
+    }
     const meta = {
       originalname: file.originalname,
       size: file.size,
