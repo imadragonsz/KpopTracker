@@ -103,8 +103,12 @@ function renderGroups(groups) {
     // Update group count display
     const groupCountEl = document.getElementById("groupCount");
     if (groupCountEl) {
-      const iconHtml = groupCountEl.dataset.icon || groupCountEl.innerHTML.replace(/\d+$/, '').trim();
-      groupCountEl.innerHTML = `${iconHtml ? iconHtml + ' ' : ''}${groups.length}`;
+      const iconHtml =
+        groupCountEl.dataset.icon ||
+        groupCountEl.innerHTML.replace(/\d+$/, "").trim();
+      groupCountEl.innerHTML = `${iconHtml ? iconHtml + " " : ""}${
+        groups.length
+      }`;
       if (!groupCountEl.dataset.icon && iconHtml) {
         groupCountEl.dataset.icon = iconHtml;
       }
@@ -120,7 +124,8 @@ function renderGroups(groups) {
 
     // Modern card layout (flex row)
     const flexRow = document.createElement("div");
-    flexRow.className = "d-flex align-items-stretch flex-wrap gap-3 mb-3 justify-content-center";
+    flexRow.className =
+      "d-flex align-items-stretch flex-wrap gap-3 mb-3 justify-content-center";
     flexRow.id = "groupCardsFlexRow";
     pageGroups.forEach((group) => {
       const cardCol = document.createElement("div");
@@ -131,13 +136,20 @@ function renderGroups(groups) {
       cardCol.style.alignItems = "stretch";
       const cardHtml = `
         <div class="card h-100 shadow-sm" style="width: 220px; cursor:pointer; position:relative;">
-          <img src="${group.image || "../assets/images/default_album.png"}" class="card-img-top browse-group-img" alt="${group.name}">
+          <img src="${
+            group.image || "../assets/images/default_album.png"
+          }" class="card-img-top browse-group-img" alt="${group.name}">
           <div class="card-body d-flex flex-column p-2">
             <h6 class="card-title mb-1">${group.name}</h6>
-            <p class="card-text mb-1"><span class="fw-bold">Debut:</span> ${group.debutDate || group.debut_year || "—"}</p>
             <div class="d-flex gap-2 mt-2">
-              ${isAdmin ? `<button class="btn btn-sm btn-warning edit-group-btn flex-fill" data-id="${group.id}"><i class="bi bi-pencil"></i></button>` : ""}
-              <button class="btn btn-sm btn-danger remove-group-btn flex-fill" data-id="${group.id}"><i class="bi bi-trash"></i></button>
+              ${
+                isAdmin
+                  ? `<button class="btn btn-sm btn-warning edit-group-btn flex-fill" data-id="${group.id}"><i class="bi bi-pencil"></i></button>`
+                  : ""
+              }
+              <button class="btn btn-sm btn-danger remove-group-btn flex-fill" data-id="${
+                group.id
+              }"><i class="bi bi-trash"></i></button>
             </div>
           </div>
         </div>
@@ -145,93 +157,97 @@ function renderGroups(groups) {
       cardCol.innerHTML = cardHtml;
 
       // Card click event to open group info modal
-      cardCol.querySelector(".card").addEventListener("click", async function (e) {
-        if (
-          e.target.classList.contains("edit-group-btn") ||
-          e.target.classList.contains("remove-group-btn")
-        )
-          return;
-        const [members, albums] = await Promise.all([
-          fetchMembersByGroup(group.id),
-          fetchAlbums(),
-        ]);
-        const groupAlbums = albums.filter((a) => a.group === group.name);
-        showGroupInfoModal(group, members, groupAlbums, {
-          onShow: () => showModalById("groupInfoModal"),
-          onManageMembers: () => {
-            hideModalById("groupInfoModal");
-            setTimeout(() => {
-              if (typeof window.showMemberManagementModal === "function") {
-                async function handleMemberSave(updatedMember) {
-                  let memberToEdit = members.find((m) => m.name === updatedMember.name);
-                  if (memberToEdit) {
-                    await updateMember(
-                      memberToEdit.id,
-                      updatedMember.name,
-                      updatedMember.info,
-                      updatedMember.image,
-                      updatedMember.birthday,
-                      updatedMember.height
+      cardCol
+        .querySelector(".card")
+        .addEventListener("click", async function (e) {
+          if (
+            e.target.classList.contains("edit-group-btn") ||
+            e.target.classList.contains("remove-group-btn")
+          )
+            return;
+          const [members, albums] = await Promise.all([
+            fetchMembersByGroup(group.id),
+            fetchAlbums(),
+          ]);
+          const groupAlbums = albums.filter((a) => a.group === group.name);
+          showGroupInfoModal(group, members, groupAlbums, {
+            onShow: () => showModalById("groupInfoModal"),
+            onManageMembers: () => {
+              hideModalById("groupInfoModal");
+              setTimeout(() => {
+                if (typeof window.showMemberManagementModal === "function") {
+                  async function handleMemberSave(updatedMember) {
+                    let memberToEdit = members.find(
+                      (m) => m.name === updatedMember.name
                     );
-                  } else {
-                    if (typeof addMember === "function") {
-                      await addMember(
-                        group.id,
+                    if (memberToEdit) {
+                      await updateMember(
+                        memberToEdit.id,
                         updatedMember.name,
                         updatedMember.info,
                         updatedMember.image,
                         updatedMember.birthday,
                         updatedMember.height
                       );
+                    } else {
+                      if (typeof addMember === "function") {
+                        await addMember(
+                          group.id,
+                          updatedMember.name,
+                          updatedMember.info,
+                          updatedMember.image,
+                          updatedMember.birthday,
+                          updatedMember.height
+                        );
+                      }
                     }
+                    const refreshedMembers = await fetchMembersByGroup(
+                      group.id
+                    );
+                    members.length = 0;
+                    members.push(...refreshedMembers);
+                    window.showMemberManagementModal(members, handleMemberSave);
                   }
-                  const refreshedMembers = await fetchMembersByGroup(group.id);
-                  members.length = 0;
-                  members.push(...refreshedMembers);
                   window.showMemberManagementModal(members, handleMemberSave);
                 }
-                window.showMemberManagementModal(members, handleMemberSave);
-              }
-            }, 300);
-          },
-          onAlbumClick: (albumId) => {},
-          onMemberClick: (memberId) => {},
+              }, 300);
+            },
+            onAlbumClick: (albumId) => {},
+            onMemberClick: (memberId) => {},
+          });
         });
-      });
 
       // Edit button event (only if admin)
       if (isAdmin) {
         const editBtn = cardCol.querySelector(".edit-group-btn");
         if (editBtn) {
-          editBtn.addEventListener(
-            "click",
-            async function (e) {
-              e.stopPropagation();
-              if (
-                typeof import("../components/editGroupModal.js").then === "function"
-              ) {
-                const { ensureEditGroupModal } = await import(
-                  "../components/editGroupModal.js"
-                );
-                ensureEditGroupModal();
-              }
-              const groups = await fetchGroups();
-              const g = groups.find((gr) => gr.id == group.id);
-              if (g) {
-                const editGroupName = document.getElementById("editGroupName");
-                const editGroupImage = document.getElementById("editGroupImage");
-                const editGroupNotes = document.getElementById("editGroupNotes");
-                if (editGroupName && editGroupImage && editGroupNotes) {
-                  editGroupName.value = g.name;
-                  editGroupImage.value = g.image || "";
-                  editGroupNotes.value = g.notes || "";
-                  window.editingGroupId = g.id;
-                  showModalById("editGroupModal");
-                  setTimeout(() => editGroupName.focus(), 300);
-                }
+          editBtn.addEventListener("click", async function (e) {
+            e.stopPropagation();
+            if (
+              typeof import("../components/editGroupModal.js").then ===
+              "function"
+            ) {
+              const { ensureEditGroupModal } = await import(
+                "../components/editGroupModal.js"
+              );
+              ensureEditGroupModal();
+            }
+            const groups = await fetchGroups();
+            const g = groups.find((gr) => gr.id == group.id);
+            if (g) {
+              const editGroupName = document.getElementById("editGroupName");
+              const editGroupImage = document.getElementById("editGroupImage");
+              const editGroupNotes = document.getElementById("editGroupNotes");
+              if (editGroupName && editGroupImage && editGroupNotes) {
+                editGroupName.value = g.name;
+                editGroupImage.value = g.image || "";
+                editGroupNotes.value = g.notes || "";
+                window.editingGroupId = g.id;
+                showModalById("editGroupModal");
+                setTimeout(() => editGroupName.focus(), 300);
               }
             }
-          );
+          });
         }
       }
       // Remove button event (delegated outside, but can be added here if needed)
@@ -251,12 +267,17 @@ function renderGroups(groups) {
         e.stopPropagation();
         const groupId = btn.getAttribute("data-id");
         if (!groupId) return;
-        if (!confirm("Are you sure you want to remove this group? This cannot be undone.")) return;
+        if (
+          !confirm(
+            "Are you sure you want to remove this group? This cannot be undone."
+          )
+        )
+          return;
         try {
           await removeUserFromGroup(groupId);
           // Remove group from cache and refresh
           let groups = getCachedData("groups") || [];
-          groups = groups.filter(g => g.id != groupId);
+          groups = groups.filter((g) => g.id != groupId);
           setCachedData("groups", groups);
           await loadUserGroupsForManagement();
         } catch (err) {
@@ -269,7 +290,8 @@ function renderGroups(groups) {
 
     // Pagination controls
     const paginationDiv =
-      document.getElementById("groupPagination") || document.createElement("div");
+      document.getElementById("groupPagination") ||
+      document.createElement("div");
     paginationDiv.id = "groupPagination";
     paginationDiv.className =
       "d-flex justify-content-center align-items-center mt-3";

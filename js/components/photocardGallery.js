@@ -253,7 +253,7 @@ async function renderGallery(photocards) {
     item.innerHTML = `
       <img src="${src400}"
         srcset="${src400} 400w, ${src800} 800w, ${src1200} 1200w"
-        sizes="(max-width: 600px) 90vw, (max-width: 900px) 45vw, 300px"
+        sizes="(min-width: 1000px) 300px, (max-width: 900px) 45vw, (max-width: 600px) 90vw, 300px"
         width="150" height="225"
         class="photocard-img" alt="Photocard" loading="lazy" />
       <div class="photocard-actions">
@@ -400,7 +400,10 @@ galleryContainer.addEventListener("click", async (e) => {
   if (img) {
     const modal = createLightbox();
     const lightboxImg = modal.querySelector("#photocardLightboxImg");
-    lightboxImg.src = img.src;
+    // Always use the 1200w image for the lightbox
+    // Extract the base URL (remove -400, -800, -1200 if present)
+    const baseUrl = img.src.replace(/(-400|-800|-1200)?\.webp$/, "");
+    lightboxImg.src = `${baseUrl}-1200.webp`;
     modal.style.display = "flex";
   }
 });
