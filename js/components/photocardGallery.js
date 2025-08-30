@@ -253,7 +253,7 @@ async function renderGallery(photocards) {
     item.innerHTML = `
       <img src="${src400}"
         srcset="${src400} 400w, ${src800} 800w, ${src1200} 1200w"
-        sizes="(min-width: 1000px) 300px, (max-width: 900px) 45vw, (max-width: 600px) 90vw, 300px"
+        sizes="(max-width: 499px) 100vw, (max-width: 899px) 800px, 1200px"
         width="150" height="225"
         class="photocard-img" alt="Photocard" loading="lazy" />
       <div class="photocard-actions">

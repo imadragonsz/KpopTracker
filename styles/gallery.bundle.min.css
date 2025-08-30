@@ -1,3 +1,16 @@
+/* Reserve space for filter bar on mobile to reduce CLS */
+@media (max-width: 767.98px) {
+  .mb-2.d-flex.flex-column.flex-md-row.align-items-center.gap-2 {
+    min-height: 56px;
+  }
+}
+Reserve space for containers and navbar-account to reduce CLS .container-fluid,
+.container {
+  min-height: 80px;
+}
+.navbar-account {
+  min-width: 120px;
+}
 /* Style native date input to match dark theme */
 input[type="date"].form-control {
   background: #232946;
@@ -231,8 +244,7 @@ html {
   scrollbar-width: thin;
   scrollbar-color: #43c6ac #181a20;
 }
-#profileNavLink.d-none,
-.navbar-profile-btn.d-none {
+#profileNavLink.d-none {
   display: none !important;
 }
 .navbar-toggler-icon {
@@ -263,11 +275,6 @@ html {
 }
 .navbar-toggler-icon span {
   top: 0.79em;
-}
-.navbar-toggler.collapsed .navbar-toggler-icon span,
-.navbar-toggler.collapsed .navbar-toggler-icon::after,
-.navbar-toggler.collapsed .navbar-toggler-icon::before {
-  background: #43c6ac;
 }
 .navbar-collapse.collapsing,
 .navbar-collapse.show {
@@ -631,7 +638,7 @@ body #groupList .list-group-item.album-list-item.redesigned-album-card {
   border-color: #67e8f9 !important;
   background: #232a46 !important;
 }
-.album-card-group-img,
+
 .browse-group-img {
   width: 140px;
   height: 140px;
@@ -719,20 +726,6 @@ body #groupList .list-group-item.album-list-item.redesigned-album-card {
     padding: 0.7em 1em !important;
     border-radius: 0.7em !important;
   }
-}
-.album-pagination-info,
-.mx-2.page-info,
-.version-pagination-info {
-  color: #67e8f9;
-  background: #181a20;
-  border-radius: 8px;
-  padding: 0.18em 0.9em;
-  font-weight: 600;
-  font-size: 1.08em;
-  letter-spacing: 0.03em;
-  box-shadow: 0 1px 6px 0 #232a3620;
-  margin: 0 0.5em;
-  display: inline-block;
 }
 @media (max-width: 700px) {
   .album-card-flex {

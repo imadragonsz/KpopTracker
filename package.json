@@ -12,5 +12,8 @@
     "express": "^5.1.0",
     "multer": "^2.0.2",
     "sharp": "^0.34.3"
+  },
+  "devDependencies": {
+    "@fullhuman/postcss-purgecss": "^7.0.2"
   }
 }
