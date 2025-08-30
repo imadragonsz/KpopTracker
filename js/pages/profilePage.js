@@ -1,3 +1,237 @@
+// --- Album Versions On The Way Section Logic ---
+import { fetchUserAlbumVersionsBatch } from "../api/userAlbumVersionsApi.js";
+import { showAlbumVersionModal } from "../components/albumVersionModal.js";
+
+function renderOnTheWaySection() {
+  // Find the placeholder or fallback to profile-content-wrapper
+  const placeholder = document.getElementById("onTheWaySectionPlaceholder");
+  if (!placeholder) return;
+
+  // Create the section container
+  const section = document.createElement("div");
+  section.className = "row g-3 mb-4";
+  section.innerHTML = `
+    <div class="col-12 mb-2">
+      <h4 class="fw-bold text-info mb-3">
+        <i class="bi bi-truck me-2"></i>Album Versions On The Way
+      </h4>
+    </div>
+    <div class="col-12">
+      <div id="onTheWayAlbumVersions"></div>
+      <nav>
+        <ul id="onTheWayPagination" class="pagination justify-content-center"></ul>
+      </nav>
+    </div>
+  `;
+  placeholder.replaceWith(section);
+
+  // Logic for fetching and rendering
+  let onTheWayList = [];
+  let currentPage = 1;
+  const PAGE_SIZE = 5;
+
+  async function getAllUserAlbumIds() {
+    if (window.fetchUserAlbumIds) {
+      return await window.fetchUserAlbumIds();
+    }
+    // Fallback: try to get from Supabase directly
+    const supabase = await window.supabasePromise;
+    const user =
+      (await window.getCurrentUser?.()) ||
+      (await supabase.auth.getUser()).data.user;
+    if (!user) return [];
+    const { data, error } = await supabase
+      .from("user_album_versions")
+      .select("album_id")
+      .eq("user_id", user.id);
+    if (error || !data) return [];
+    return data.map((row) => row.album_id);
+  }
+
+  async function loadOnTheWayVersions() {
+    const albumIds = await getAllUserAlbumIds();
+    if (!albumIds.length) {
+      document.getElementById("onTheWayAlbumVersions").innerHTML =
+        '<div class="text-muted">No albums found.</div>';
+      document.getElementById("onTheWayPagination").innerHTML = "";
+      return;
+    }
+    // Fetch all albums and build a map of albumId -> albumName and albumImage
+    let albums = [];
+    try {
+      albums = await import("../api/albumApi.js").then((m) => m.fetchAlbums());
+    } catch {}
+    const albumInfoMap = {};
+    if (Array.isArray(albums)) {
+      for (const a of albums) {
+        const id = a.id || a.album_id;
+        const name = a.name || a.album || a.title || "(Untitled Album)";
+        // Try to get image, fallback to default
+        let image = a.image || a.cover || a.img || a.thumbnail || null;
+        if (!image) {
+          image = "../assets/images/default_album.png";
+        }
+        if (id) albumInfoMap[id] = { name, image };
+      }
+    }
+    const allVersions = await fetchUserAlbumVersionsBatch(albumIds);
+    // Flatten and filter for onTheWay, include album name
+    onTheWayList = [];
+    for (const [albumId, versions] of Object.entries(allVersions)) {
+      if (Array.isArray(versions)) {
+        for (const v of versions) {
+          if (v.onTheWay) {
+            const albumInfo = albumInfoMap[albumId] || {
+              name: "(Unknown Album)",
+              image: "../assets/images/default_album.png",
+            };
+            onTheWayList.push({
+              ...v,
+              albumId,
+              albumName: albumInfo.name,
+              albumImage: albumInfo.image,
+            });
+          }
+        }
+      }
+    }
+    renderOnTheWayPage();
+  }
+
+  function renderOnTheWayPage() {
+    // Update the on the way count in the stats card
+    const onTheWayCountDiv = document.getElementById("user-ontheway-count");
+    if (onTheWayCountDiv) {
+      onTheWayCountDiv.textContent = onTheWayList.length;
+    }
+    const container = document.getElementById("onTheWayAlbumVersions");
+    const pagination = document.getElementById("onTheWayPagination");
+    if (!onTheWayList.length) {
+      container.innerHTML =
+        '<div class="text-muted">No album versions on the way.</div>';
+      pagination.innerHTML = "";
+      return;
+    }
+    const totalPages = Math.ceil(onTheWayList.length / PAGE_SIZE);
+    if (currentPage > totalPages) currentPage = totalPages || 1;
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = onTheWayList.slice(startIdx, startIdx + PAGE_SIZE);
+    container.innerHTML = `
+      <ul class="list-group mb-3">
+        ${pageItems
+          .map(
+            (
+              v,
+              idx
+            ) => `<li class="list-group-item bg-dark text-light border-info d-flex justify-content-between align-items-center ontheway-version-item" data-idx="${
+              startIdx + idx
+            }" style="cursor:pointer;">
+          <span class="d-flex align-items-center">
+            <img src="${
+              v.albumImage || "../assets/images/default_album.png"
+            }" alt="Album Cover" class="ontheway-album-image" data-album-id="${
+              v.albumId
+            }" style="width:32px;height:32px;object-fit:cover;border-radius:4px;margin-right:10px;cursor:pointer;">
+            <strong>${v.albumName || "(Unknown Album)"}</strong> - <span>${
+              v.name
+            }</span>${
+              v.notes ? ` <span class='text-muted'>(${v.notes})</span>` : ""
+            }
+          </span>
+          ${
+            v.trackingCode
+              ? `<span class='badge bg-info text-dark ms-2'>Tracking: ${v.trackingCode}</span>`
+              : ""
+          }
+        </li>`
+          )
+          .join("")}
+      </ul>
+    `;
+    // Add click handlers: image opens album info modal, rest opens version modal
+    container.querySelectorAll(".ontheway-version-item").forEach((li) => {
+      const idx = parseInt(li.getAttribute("data-idx"));
+      const version = onTheWayList[idx];
+      // Album image click: open album info modal
+      const img = li.querySelector(".ontheway-album-image");
+      if (img) {
+        img.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          // Dynamically import showAlbumInfoModal
+          const { showAlbumInfoModal } = await import(
+            "../components/albumModals.js"
+          );
+          // Find album info from albums list (by id)
+          let albumObj = null;
+          if (window.fetchAlbums) {
+            const allAlbums = await window.fetchAlbums();
+            albumObj = allAlbums.find(
+              (a) => (a.id || a.album_id) == version.albumId
+            );
+          }
+          // Fallback: use what we have
+          if (!albumObj) {
+            albumObj = {
+              id: version.albumId,
+              album: version.albumName,
+              image: version.albumImage,
+            };
+          }
+          showAlbumInfoModal(albumObj);
+        });
+      }
+      // Rest of the item: open album version modal
+      li.addEventListener("click", (e) => {
+        // Prevent if image was clicked
+        if (e.target.classList.contains("ontheway-album-image")) return;
+        if (version) {
+          showAlbumVersionModal({
+            name: version.name,
+            trackingCode: version.trackingCode,
+            onTheWay: version.onTheWay,
+            notes: version.notes || "",
+          });
+        }
+      });
+    });
+    // Pagination controls
+    if (totalPages > 1) {
+      let html = "";
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<li class="page-item${
+          i === currentPage ? " active" : ""
+        }"><button class="page-link" data-page="${i}">${i}</button></li>`;
+      }
+      pagination.innerHTML = html;
+      pagination.querySelectorAll("button.page-link").forEach((btn) => {
+        btn.onclick = () => {
+          currentPage = parseInt(btn.dataset.page);
+          renderOnTheWayPage();
+        };
+      });
+    } else {
+      pagination.innerHTML = "";
+    }
+  }
+
+  // Initial load
+  loadOnTheWayVersions();
+}
+
+// Wait for DOMContentLoaded and profile-content-wrapper to exist
+document.addEventListener("DOMContentLoaded", () => {
+  // Wait for wrapper to be created by loadProfile
+  function tryRenderOnTheWaySection(retries = 20) {
+    const wrapper = document.getElementById("profile-content-wrapper");
+    const placeholder = document.getElementById("onTheWaySectionPlaceholder");
+    if (wrapper && placeholder) {
+      renderOnTheWaySection();
+    } else if (retries > 0) {
+      setTimeout(() => tryRenderOnTheWaySection(retries - 1), 100);
+    }
+  }
+  tryRenderOnTheWaySection();
+});
 import { setupExportImport } from "../exportImport.js";
 import { showLoading, hideLoading } from "../components/loading.js";
 import { supabasePromise } from "../api/supabaseClient.js";
@@ -179,7 +413,7 @@ async function loadProfile() {
     if (loginBtn) {
       loginBtn.onclick = () => {
         // Prefer direct modal if available
-        if (typeof window.showLoginModal === 'function') {
+        if (typeof window.showLoginModal === "function") {
           window.showLoginModal();
         } else {
           const navLoginBtn = document.getElementById("loginBtn");

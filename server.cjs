@@ -1,5 +1,5 @@
 // Load environment variables first
-require('dotenv').config();
+require("dotenv").config();
 
 // --- Required modules (must be at the top) ---
 const express = require("express");
@@ -7,17 +7,21 @@ const sharp = require("sharp");
 const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
-const http = require('http');
-const util = require('util');
-const { createClient } = require('@supabase/supabase-js');
+const http = require("http");
+const util = require("util");
+const { createClient } = require("@supabase/supabase-js");
 
 // Set up logging to files
-const logsDir = path.join(__dirname, 'logs');
+const logsDir = path.join(__dirname, "logs");
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }
-const logFile = fs.createWriteStream(path.join(logsDir, 'server.log'), { flags: 'a' });
-const errorFile = fs.createWriteStream(path.join(logsDir, 'error.log'), { flags: 'a' });
+const logFile = fs.createWriteStream(path.join(logsDir, "server.log"), {
+  flags: "a",
+});
+const errorFile = fs.createWriteStream(path.join(logsDir, "error.log"), {
+  flags: "a",
+});
 
 // Custom logger that writes to both console and file
 const logger = new console.Console({ stdout: logFile, stderr: errorFile });
@@ -42,14 +46,14 @@ const app = express();
 // Ensure assets directory exists
 const assetsDir = path.join(__dirname, "assets");
 if (!fs.existsSync(assetsDir)) {
-  console.log('Creating assets directory...');
+  console.log("Creating assets directory...");
   fs.mkdirSync(assetsDir, { recursive: true });
 }
 
 // Setup photocards directory
 const photocardsDir = path.join(assetsDir, "photocards");
 if (!fs.existsSync(photocardsDir)) {
-  console.log('Creating photocards directory...');
+  console.log("Creating photocards directory...");
   fs.mkdirSync(photocardsDir, { recursive: true });
 }
 const photocardUpload = multer({ dest: photocardsDir });
@@ -62,87 +66,122 @@ if (fs.existsSync(photocardsDir)) {
 // List all photocards (returns [{filename, originalname, size, uploaded, groupId, memberId}])
 app.get("/api/photocards", (req, res) => {
   if (!fs.existsSync(photocardsDir)) return res.json([]);
-  const files = fs.readdirSync(photocardsDir).filter(f => !f.endsWith(".meta.json"));
-  const photocards = files.map(fname => {
-    const metaPath = path.join(photocardsDir, fname + ".meta.json");
+  const files = fs
+    .readdirSync(photocardsDir)
+    .filter((f) => !f.endsWith(".meta.json"));
+  // Only use the largest size (1200.webp) as the canonical photocard entry
+  const mainFiles = files.filter((f) => /-1200\.webp$/.test(f));
+  const photocards = mainFiles.map((fname) => {
+    // Remove -1200.webp to get the base for meta lookup
+    const base = fname.replace(/-1200\.webp$/, "");
+    const metaPath = path.join(photocardsDir, base + ".meta.json");
     let meta = {};
     if (fs.existsSync(metaPath)) {
-      try { meta = JSON.parse(fs.readFileSync(metaPath, "utf8")); } catch {}
+      try {
+        meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+      } catch {}
     }
     return {
       filename: fname,
-      url: `/photocards/${fname}`,
+      url: `/photocards/${base}`,
       originalname: meta.originalname || fname,
       size: meta.size || null,
       uploaded: meta.uploaded || null,
       groupId: meta.groupId || null,
-      memberId: meta.memberId || null
+      memberId: meta.memberId || null,
     };
   });
   res.json(photocards);
 });
 
 // --- Supabase Admin Middleware ---
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 
 async function requireAdmin(req, res, next) {
   // You must extract the user id from your auth/session system
   // For example, if you use a JWT in Authorization header:
-  const authHeader = req.headers['authorization'];
-  if (!authHeader) return res.status(401).json({ error: 'Not authenticated' });
-  const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return res.status(401).json({ error: 'Not authenticated' });
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return res.status(401).json({ error: "Not authenticated" });
+  const token = authHeader.replace("Bearer ", "");
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(token);
+  if (error || !user)
+    return res.status(401).json({ error: "Not authenticated" });
   const { data, error: roleError } = await supabase
-    .from('user_roles')
-    .select('is_admin')
-    .eq('user_id', user.id)
+    .from("user_roles")
+    .select("is_admin")
+    .eq("user_id", user.id)
     .single();
-  if (roleError || !data?.is_admin) return res.status(403).json({ error: 'Admins only' });
+  if (roleError || !data?.is_admin)
+    return res.status(403).json({ error: "Admins only" });
   req.user = user;
   next();
 }
 
 // Upload one or more photocards
-app.post("/api/photocards/upload", requireAdmin, photocardUpload.array("photocard"), async (req, res) => {
-  if (!req.files || !req.files.length) return res.status(400).json({ error: "No file(s) uploaded." });
-  const groupId = req.body.groupId || null;
-  const memberId = req.body.memberId || null;
-  const results = [];
-  for (const file of req.files) {
-    let optimizedPath = file.path + ".webp";
-    try {
-      // Optimize: resize to max 1200x1200, convert to webp, quality 80
-      await sharp(file.path)
-        .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 80 })
-        .toFile(optimizedPath);
-      fs.unlinkSync(file.path); // Remove original
-      // Rename .webp to original filename (remove .webp extension)
-      const finalPath = file.path;
-      fs.renameSync(optimizedPath, finalPath);
-      file.mimetype = 'image/webp';
-      file.size = fs.statSync(finalPath).size;
-    } catch (err) {
-      console.error('Image optimization failed:', err);
+app.post(
+  "/api/photocards/upload",
+  requireAdmin,
+  photocardUpload.array("photocard"),
+  async (req, res) => {
+    if (!req.files || !req.files.length)
+      return res.status(400).json({ error: "No file(s) uploaded." });
+    const groupId = req.body.groupId || null;
+    const memberId = req.body.memberId || null;
+    const SIZES = [400, 800, 1200];
+    const results = [];
+    for (const file of req.files) {
+      const ext = path.extname(file.originalname).toLowerCase();
+      const base = file.path.replace(ext, "");
+      try {
+        for (const size of SIZES) {
+          const outPath = `${base}-${size}.webp`;
+          await sharp(file.path)
+            .resize({
+              width: size,
+              height: 1200,
+              fit: "inside",
+              withoutEnlargement: true,
+            })
+            .webp({ quality: 80 })
+            .toFile(outPath);
+        }
+        // Replace original with largest size (for legacy use)
+        const largestPath = `${base}-1200.webp`;
+        fs.unlinkSync(file.path);
+        fs.copyFileSync(largestPath, file.path);
+        file.mimetype = "image/webp";
+        file.size = fs.statSync(file.path).size;
+      } catch (err) {
+        console.error("Image optimization failed:", err);
+      }
+      const meta = {
+        originalname: file.originalname,
+        size: file.size,
+        uploaded: Date.now(),
+        groupId,
+        memberId,
+      };
+      fs.writeFileSync(file.path + ".meta.json", JSON.stringify(meta));
+      results.push({
+        filename: file.filename,
+        url: `/photocards/${file.filename}`,
+      });
     }
-    const meta = {
-      originalname: file.originalname,
-      size: file.size,
-      uploaded: Date.now(),
-      groupId,
-      memberId
-    };
-    fs.writeFileSync(file.path + ".meta.json", JSON.stringify(meta));
-    results.push({ filename: file.filename, url: `/photocards/${file.filename}` });
+    res.json({ uploaded: results });
   }
-  res.json({ uploaded: results });
-});
+);
 
 // Delete a photocard
 app.post("/api/photocards/delete", express.json(), requireAdmin, (req, res) => {
   const { filename } = req.body;
-  if (!filename) return res.status(400).json({ error: "No filename provided." });
+  if (!filename)
+    return res.status(400).json({ error: "No filename provided." });
   const filePath = path.join(photocardsDir, filename);
   const metaPath = filePath + ".meta.json";
   let deleted = false;
@@ -157,7 +196,7 @@ app.post("/api/photocards/delete", express.json(), requireAdmin, (req, res) => {
 // Multer setup for image uploads (cross-platform)
 const uploadsDir = path.join(__dirname, "assets", "uploads");
 if (!fs.existsSync(uploadsDir)) {
-  console.log('Creating uploads directory...');
+  console.log("Creating uploads directory...");
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 const upload = multer({ dest: uploadsDir });
@@ -192,9 +231,9 @@ app.use("/styles", express.static(path.join(__dirname, "styles")));
 app.use("/public", express.static(path.join(__dirname, "public")));
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use("/js", (req, res, next) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   express.static(path.join(__dirname, "js"))(req, res, next);
 });
 app.use("/pages", express.static(path.join(__dirname, "pages")));
@@ -312,7 +351,7 @@ app.post("/api/delete-uploads", express.json(), (req, res) => {
 app.get("/api/config", (req, res) => {
   res.json({
     SUPABASE_URL: process.env.SUPABASE_URL,
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   });
 });
 
@@ -345,18 +384,18 @@ app.use((req, res) => {
   res.status(404).send("404 Not Found");
 });
 
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
 
 // Simple server start with better logging
 const PORT = process.env.PORT || 3000;
 
-console.log('Starting server initialization...');
+console.log("Starting server initialization...");
 
 // Create HTTP server instance
 const server = http.createServer(app);
@@ -366,9 +405,9 @@ module.exports = { app, server };
 
 // Handle graceful shutdown
 function cleanup() {
-  console.log('Shutting down server...');
+  console.log("Shutting down server...");
   server.close(() => {
-    console.log('Server closed.');
+    console.log("Server closed.");
     // Don't exit process when running under PM2
     if (!process.env.PM2_USAGE) {
       process.exit(0);
@@ -377,67 +416,66 @@ function cleanup() {
 }
 
 // Setup signal handlers
-process.on('SIGTERM', cleanup);
-process.on('SIGINT', cleanup);
+process.on("SIGTERM", cleanup);
+process.on("SIGINT", cleanup);
 
 // Handle uncaught errors
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception:', error);
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught exception:", error);
   cleanup();
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled rejection at:', promise, 'reason:', reason);
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled rejection at:", promise, "reason:", reason);
   cleanup();
 });
 
 // Start server if running directly (not through PM2)
 if (require.main === module) {
   try {
-    console.log('Starting server...');
-    
-    server.listen(PORT, '0.0.0.0', () => {
-      console.log('----------------------------------------');
+    console.log("Starting server...");
+
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log("----------------------------------------");
       console.log(`Server running on port ${PORT}`);
       console.log(`Local access via: http://localhost:${PORT}`);
       console.log(`Network access via: http://0.0.0.0:${PORT}`);
-      console.log('Make sure nginx is configured to proxy to this port');
-      console.log('----------------------------------------');
+      console.log("Make sure nginx is configured to proxy to this port");
+      console.log("----------------------------------------");
     });
 
-    server.on('error', (error) => {
-      console.error('Server error:', error.message);
-      if (error.code === 'EADDRINUSE') {
+    server.on("error", (error) => {
+      console.error("Server error:", error.message);
+      if (error.code === "EADDRINUSE") {
         console.error(`Port ${PORT} is already in use!`);
       }
       cleanup();
     });
-
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error("Failed to start server:", error);
     cleanup();
   }
 } else {
   // When running through PM2, start server immediately
-  console.log('Starting server in PM2 mode...');
+  console.log("Starting server in PM2 mode...");
   try {
-    server.listen(PORT, '0.0.0.0', () => {
-      console.log('----------------------------------------');
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log("----------------------------------------");
       console.log(`Server running on port ${PORT}`);
       console.log(`Local access via: http://localhost:${PORT}`);
       console.log(`Network access via: http://0.0.0.0:${PORT}`);
-      console.log('----------------------------------------');
+      console.log("----------------------------------------");
     });
 
-    server.on('error', (error) => {
-      console.error('Server error:', error.message);
-      if (error.code === 'EADDRINUSE') {
+    server.on("error", (error) => {
+      console.error("Server error:", error.message);
+      if (error.code === "EADDRINUSE") {
         console.error(`Port ${PORT} is already in use!`);
       }
       cleanup();
     });
   } catch (error) {
-    console.error('Error starting server in PM2 mode:', error);
+    console.error("Error starting server in PM2 mode:", error);
     cleanup();
   }
 }

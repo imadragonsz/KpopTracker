@@ -72,7 +72,8 @@ let sortReversed = false;
 function renderAlbumPagination(totalPages) {
   const paginationDiv = document.getElementById("albumPagination");
   if (!paginationDiv) return;
-  paginationDiv.className = "d-flex justify-content-center align-items-center mt-3";
+  paginationDiv.className =
+    "d-flex justify-content-center align-items-center mt-3";
   paginationDiv.innerHTML = "";
   if (totalPages > 1) {
     const prevBtn = document.createElement("button");
@@ -90,7 +91,8 @@ function renderAlbumPagination(totalPages) {
         // Scroll pagination into view after update
         setTimeout(() => {
           const pagDiv = document.getElementById("albumPagination");
-          if (pagDiv) pagDiv.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (pagDiv)
+            pagDiv.scrollIntoView({ behavior: "smooth", block: "center" });
         }, 0);
       }
     };
@@ -114,7 +116,8 @@ function renderAlbumPagination(totalPages) {
         // Scroll pagination into view after update
         setTimeout(() => {
           const pagDiv = document.getElementById("albumPagination");
-          if (pagDiv) pagDiv.scrollIntoView({ behavior: "smooth", block: "center" });
+          if (pagDiv)
+            pagDiv.scrollIntoView({ behavior: "smooth", block: "center" });
         }, 0);
       }
     };
@@ -236,6 +239,14 @@ window.addEventListener("DOMContentLoaded", () => {
       if (icon)
         icon.style.transform = sortReversed ? "rotate(0deg)" : "rotate(180deg)";
       updateFilters();
+    });
+  }
+
+  // Always re-initialize Flatpickr after the edit album modal is shown
+  const editAlbumModal = document.getElementById("editAlbumModal");
+  if (editAlbumModal) {
+    editAlbumModal.addEventListener("shown.bs.modal", () => {
+      if (window.initFlatpickrOnAll) window.initFlatpickrOnAll();
     });
   }
 

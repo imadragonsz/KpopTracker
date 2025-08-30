@@ -5,33 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Profile | K-Pop Album Tracker</title>
     <link
+      rel="preload"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
     />
-    <link rel="stylesheet" href="../styles/global.css" />
-    <link rel="stylesheet" href="../styles/navbar.css" />
-    <link rel="stylesheet" href="../styles/album-cards.css" />
-    <link rel="stylesheet" href="../styles/modals.css" />
-    <link rel="stylesheet" href="../styles/forms.css" />
-    <link rel="stylesheet" href="../styles/loading.css" />
+    <noscript
+      ><link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    /></noscript>
     <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="preload"
+      href="../styles/gallery.bundle.min.css"
+      as="style"
+      onload="this.rel='stylesheet'"
     />
-    <link rel="stylesheet" href="/styles/animations.css" />
-    <link rel="stylesheet" href="../styles/flatpickr-dark.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <noscript
+      ><link rel="stylesheet" href="../styles/gallery.bundle.min.css"
+    /></noscript>
+    <link
+      rel="preload"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      as="style"
+      onload="this.rel='stylesheet'"
+    />
+    <noscript
+      ><link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    /></noscript>
+    <link
+      rel="preload"
+      href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+      as="style"
+      onload="this.rel='stylesheet'"
+    />
+    <noscript
+      ><link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+    /></noscript>
     <style id="choices-dark-theme">
-      .choices.choices-dark, .choices.choices-dark .choices__inner, .choices.choices-dark .choices__list--dropdown, .choices.choices-dark .choices__list[aria-expanded] {
+      .choices.choices-dark,
+      .choices.choices-dark .choices__inner,
+      .choices.choices-dark .choices__list--dropdown,
+      .choices.choices-dark .choices__list[aria-expanded] {
         background: #181a20 !important;
         color: #e0e0e0 !important;
         border-color: #43c6ac !important;
       }
-      .choices.choices-dark .choices__item--selectable, .choices.choices-dark .choices__item {
+      .choices.choices-dark .choices__item--selectable,
+      .choices.choices-dark .choices__item {
         color: #e0e0e0 !important;
         background: #181a20 !important;
       }
-      .choices.choices-dark .choices__item--selectable.is-highlighted, .choices.choices-dark .choices__item--selectable.is-selected {
+      .choices.choices-dark .choices__item--selectable.is-highlighted,
+      .choices.choices-dark .choices__item--selectable.is-selected {
         background: #23272f !important;
         color: #43c6ac !important;
       }
@@ -43,7 +73,9 @@
         color: #43c6ac !important;
         opacity: 1 !important;
       }
-      .choices.choices-dark .choices__list--dropdown .choices__item--selectable {
+      .choices.choices-dark
+        .choices__list--dropdown
+        .choices__item--selectable {
         border-bottom: 1px solid #23272f !important;
       }
       .choices.choices-dark .choices__list--dropdown {
@@ -94,10 +126,14 @@
             document.body.appendChild(s);
           });
         await loadScript(
-          "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"
+          "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js",
+          "text/javascript",
+          true // defer
         );
         await loadScript(
-          "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+          "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js",
+          "text/javascript",
+          true // defer
         );
         // Load your app scripts (as modules if needed)
         const appScripts = [
@@ -138,6 +174,34 @@
         );
       })();
     </script>
+    <!-- ...existing code... -->
+    <!-- Album Versions On The Way will be rendered here by profilePage.js -->
+
+    <!-- Album Info Modal (for albumModals.js) -->
+    <div
+      class="modal fade"
+      id="albumInfoModal"
+      tabindex="-1"
+      aria-labelledby="albumInfoModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-light">
+          <div class="modal-header">
+            <h5 class="modal-title" id="albumInfoModalLabel">Album Info</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="albumInfoBody">
+            <!-- Album info will be injected here by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Change Password Modal -->
     <div
@@ -415,6 +479,7 @@
             </div>
           </div>
         </div>
+        <div id="onTheWaySectionPlaceholder"></div>
       </div>
 
       <hr class="my-4" style="border-color: #43c6ac; opacity: 0.3" />

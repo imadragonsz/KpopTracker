@@ -32,6 +32,11 @@ import {
 } from "../api/userAlbumVersionsApi.js";
 
 export async function showAlbumInfoModal(album) {
+  // Remove any existing dynamically created edit album modal to prevent duplicate date-pickers
+  const existingEditModal = document.getElementById("editAlbumModal");
+  if (existingEditModal && !existingEditModal.hasAttribute("data-static")) {
+    existingEditModal.remove();
+  }
   const albumInfoBody = document.getElementById("albumInfoBody");
   let albumHtml = "";
   if (album.image) {
