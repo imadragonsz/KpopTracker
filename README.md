@@ -15,7 +15,7 @@
 ## 🚀 Features
 
 - **Album Collection Management:** Add, edit, and delete albums and versions, including group, release date, and special versions.
-- **Photocard Gallery:** Upload, view, and manage photocard images in a responsive gallery UI. Supports bulk upload and group/member tagging.
+- **Photocard Gallery:** Upload, view, and manage photocard images in a responsive gallery UI. Bulk upload and group/member tagging supported.
 - **Group & Member Filtering:** Filter your photocard gallery by group and member.
 - **Group Management:** Organize albums and photocards by K-Pop group and view group-specific stats.
 - **Profile & Stats:** View collection stats, most collected group, and recent activity.
@@ -47,8 +47,24 @@
 2. **Configure Supabase:**
    - Set up a Supabase project and update the API keys in `js/api/supabaseClient.js`.
 3. **Set up your Supabase database:**
-   - Create the `albums`, `groups`, and `members` tables as described in the code comments.
+
+   - **Required tables:**
+     - `albums`
+     - `groups`
+     - `members`
+     - `user_album_versions`
+     - `user_roles`
+   - In the `user_roles` table, make sure at least one user has `is_admin` set to `TRUE` (see example below).
    - Enable Row Level Security (RLS) and add policies to restrict access to user-owned data.
+
+   **Example `user_roles` row:**
+
+   ```
+   | user_id                               | is_admin |
+   |---------------------------------------|----------|
+   | 123e4567-e89b-12d3-a456-426614174000  | TRUE     |
+   ```
+
 4. **Install dependencies (for backend features):**
    ```sh
    npm install
@@ -66,21 +82,9 @@
 <details>
 <summary>Click to expand</summary>
 
-_Add your screenshots here!_
+_No screenshots yet 😊_
 
 </details>
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
-
----
-
-## ⚠️ Disclaimer
-
-This project is intended for local or private use. Supabase API keys are included in the frontend code. **Do not deploy publicly without understanding the security implications.**
 
 ---
 
